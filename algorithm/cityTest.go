@@ -2,6 +2,7 @@ package algorithm
 
 import (
 	"container/ring"
+	"fmt"
 	"time"
 )
 
@@ -25,12 +26,12 @@ func GetTestCity() City {
 	city[11] = Node{ID: 11, Outputs: []Link{Link{Name: "Palacios", OriginID: 11, DestinyID: 15, Weight: 35}, Link{Name: "Mitre", OriginID: 11, DestinyID: 12, Weight: 35}}}
 	city[12] = Node{ID: 12, Outputs: []Link{Link{Name: "Justo", OriginID: 12, DestinyID: 8, Weight: 30}}}
 	city[13] = Node{ID: 13, Outputs: []Link{}}
-	city[14] = Node{ID: 14, Outputs: []Link{Link{Name: "Irigoyen", OriginID: 14, DestinyID: 13, Weight: 35}, Link{Name: "Urquiza", OriginID: 14, DestinyID: 13, Weight: 30}}}
+	city[14] = Node{ID: 14, Outputs: []Link{Link{Name: "Irigoyen", OriginID: 14, DestinyID: 10, Weight: 35}, Link{Name: "Urquiza", OriginID: 14, DestinyID: 13, Weight: 30}}}
 	city[15] = Node{ID: 15, Outputs: []Link{Link{Name: "Urquiza", OriginID: 15, DestinyID: 14, Weight: 30}}}
 	city[16] = Node{ID: 16, Outputs: []Link{Link{Name: "Justo", OriginID: 16, DestinyID: 12, Weight: 30}, Link{Name: "Urquiza", OriginID: 16, DestinyID: 15, Weight: 30}}}
 	myCity := City{Nodes: city, Name: "Fake Buenos Aires"}
 	myCity.GenerateSem()
-	myCity.EnableSem()
+	//myCity.EnableSem()
 	return myCity
 }
 
@@ -57,7 +58,7 @@ func (c City) GenerateSem() {
 	for i := 1; i < len(c.Nodes); i++ {
 		links := c.getLinked(i)
 		if len(links) == 0 {
-			c.Nodes[i].Sem = defaultSem
+			c.Nodes[i].Sem = defaultSemaphore()
 			continue
 		}
 		var sem Semaphore
@@ -65,17 +66,23 @@ func (c City) GenerateSem() {
 		sem.Inputs = ring.New(len(links))
 		for j := 0; j < len(links); j++ {
 			sem.Inputs = sem.Inputs.Next()
-			sem.ActiveInput = sem.Inputs.Next().Value.(*Link)
+			sem.ActiveInput, _ = sem.Inputs.Next().Value.(*Link)
 			sem.Inputs.Value = &links[j]
 			sem.ActiveInput, _ = sem.Inputs.Next().Value.(*Link)
 		}
-		sem.Status = make(chan SemRequest, 1)
+		sem.Status = make(chan SemRequest, 500)
 		go sem.Start()
 	}
 }
 
+func defaultSemaphore() Semaphore {
+	return Semaphore{Inputs: ring.New(0), ActiveInput: nil, Interval: defaultInterval, Status: make(chan SemRequest, 1), Paused: false}
+}
+
 func (c City) EnableSem() {
+	fmt.Println("len:", len(c.Nodes))
 	for i := 1; i < len(c.Nodes); i++ {
+		fmt.Println("#85,", i)
 		c.Nodes[i].Sem.Status <- SemRequest{Status: false}
 	}
 }

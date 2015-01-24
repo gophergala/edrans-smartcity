@@ -2,6 +2,7 @@ package algorithm
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 )
 
@@ -16,6 +17,7 @@ type PublicService struct {
 	Location int //NodeID
 	Service  string
 	Vehicles []Vehicle
+	Errors   chan error
 }
 
 type Node struct {
@@ -56,16 +58,28 @@ type Path struct {
 }
 
 type Vehicle struct {
-	Service   string
-	MinWeight int
-	Busy      bool
-	Alert     chan Path
-	Errors    chan error
-	InCity    *City
-	Position  *Node
+	Service      string
+	MinWeight    int
+	Busy         bool
+	Alert        chan Path
+	Errors       chan error
+	InCity       *City
+	Position     *Node
+	BasePosition *Node
 }
 
-func (v *Vehicle) Patrol(start int) {
+func (c *City) addService(service string, location, vehicles, minWeight int) {
+	var newservice PublicService
+	newservice.Service = service
+	newservice.Location = location
+	newservice.Errors = make(chan error, 5)
+	for i := 0; i < vehicles; i++ {
+		newservice.Vehicles = append(newservice.Vehicles, Vehicle{Service: service, MinWeight: minWeight, Errors: newservice.Errors, InCity: c, BasePosition: c.getNode(location)})
+	}
+	c.Services = append(c.Services, PublicService{})
+}
+
+func (v *Vehicle) patrol(start int) {
 	patrol := time.After(1 * time.Second)
 	for {
 		select {
@@ -85,10 +99,35 @@ func (v *Vehicle) Patrol(start int) {
 	}
 }
 
-func (v *Vehicle) await() {
+func (v *Vehicle) wait() {
 	for {
 		path := <-v.Alert
 		v.run(path)
+		v.Position = v.BasePosition
+	}
+}
+
+func (c *City) launchVehicles() {
+	for i := 0; i < len(c.Services); i++ {
+		if c.Services[i].Service == "hospital" || c.Services[i].Service == "firehouse" {
+			for j := 0; j < len(c.Services[i].Vehicles); j++ {
+				go c.Services[i].Vehicles[j].wait()
+			}
+		} else {
+			for j := 0; j < len(c.Services[i].Vehicles); j++ {
+				go c.Services[i].Vehicles[j].patrol(rand.Int() % len(c.Nodes))
+			}
+		}
+	}
+}
+
+//will be used only for patrolmen
+func (s *PublicService) readErrors(c *City) {
+	for {
+		<-s.Errors
+		newPatrolman := Vehicle{Service: "policeman", MinWeight: 5, Alert: make(chan Path, 1), Errors: s.Errors, InCity: c}
+		s.Vehicles = append(s.Vehicles, newPatrolman)
+		go newPatrolman.patrol(rand.Int() % len(c.Nodes))
 	}
 }
 

@@ -1,9 +1,127 @@
 package factory
 
-import "github.com/gophergala/edrans-smartcity/models"
+import (
+	"github.com/gophergala/edrans-smartcity/models"
 
-func CreateCity(numNodes int, name string) *models.City {
+	"math/rand"
+	"strconv"
+)
+
+const (
+	MIN_WEIGHT_AMBULANCE         = 10
+	MIN_WEIGHT_FIREFIGHT_VEHICLE = 15
+	MIN_WEIGHT_POLICE_CARS       = 5
+	MAX_POLICE_CARS              = 5
+	MAX_FIREFIGHT_VEHICLES       = 5
+	MAX_AMBULANCES               = 5
+)
+
+func CreateRectangularCity(m int, n int, name string) (myCity *models.City, err error) {
+	numNodes := m * n
 	var city = make([]models.Node, numNodes)
+
+	// ID are 1-based and arrays are 0-based
+	currID := 1
+	for i := 0; i < m; i++ {
+		for j := 0; j < n; j++ {
+			neighbourList := getNeighbours(i, j, m, n)
+
+			linkList := make([]models.Link, 0)
+			for k := 0; k < len(neighbourList); k++ {
+				if currNeighbour := neighbourList[k]; currNeighbour != -1 {
+					linkList = append(linkList,
+						models.Link{
+							Name:      strconv.Itoa(currID) + "to" + strconv.Itoa(currNeighbour) + "St.",
+							OriginID:  currID,
+							DestinyID: currNeighbour,
+							Weight:    getRandomWeight(),
+						},
+					)
+				}
+			}
+
+			city[currID-1] = models.Node{
+				ID:       currID,
+				Location: []int{i, j},
+				Outputs:  linkList,
+			}
+			currID++
+		}
+	}
+
+	myCity = models.NewCity(city, name)
+
+	myCity.AddService("Hospital", rand.Intn(numNodes)+1, rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_AMBULANCE)
+	myCity.AddService("FireDept", rand.Intn(numNodes)+1, rand.Intn(MAX_FIREFIGHT_VEHICLES)+1, MIN_WEIGHT_FIREFIGHT_VEHICLE)
+	myCity.AddService("PoliceDept", rand.Intn(numNodes)+1, rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_POLICE_CARS)
+	myCity.LaunchVehicles()
+	return
+}
+
+func getNeighbours(i, j, m, n int) (list []int) {
+	list = make([]int, 0)
+	vert := calcVerticalNeighbourID(i, j, m, n)
+	if vert != -1 {
+		list = append(list, vert)
+	}
+	horiz := calcHorizontalNeighbourID(i, j, m, n)
+	if horiz != -1 {
+		list = append(list, horiz)
+	}
+
+	return
+}
+
+func calcHorizontalNeighbourID(i, j, m, n int) int {
+	var output int
+
+	if i%2 == 0 {
+		// then strets go right
+		if j+1 == n {
+			return -1
+		}
+		output = i*n + j + 2
+	} else {
+		// then streets go left
+		if j == 0 {
+			return -1
+		}
+		output = i*n + j
+	}
+
+	return output
+}
+
+func calcVerticalNeighbourID(i, j, m, n int) int {
+	var output int
+
+	if j%2 == 0 {
+		// then streets go down
+		if i+1 == m {
+			return -1
+		}
+		output = n*(i+1) + j + 1
+	} else {
+		// then streets go up
+		if i == 0 {
+			return -1
+		}
+		output = n*(i-1) + j + 1
+	}
+
+	return output
+}
+
+func getRandomNode(numNodes int) int {
+	return rand.Intn(numNodes) + 1 // return [1, n] random
+}
+
+func getRandomWeight() int {
+	return rand.Intn(100)
+}
+
+func SampleCity() *models.City {
+	var city = make([]models.Node, 16)
 
 	city[1] = models.Node{ID: 1, Outputs: []models.Link{models.Link{Name: "Roca", OriginID: 1, DestinyID: 2, Weight: 30}, models.Link{Name: "Pellegrini", OriginID: 1, DestinyID: 5, Weight: 30}}}
 	city[2] = models.Node{ID: 2, Outputs: []models.Link{models.Link{Name: "Roca", OriginID: 2, DestinyID: 3, Weight: 30}}}
@@ -21,10 +139,12 @@ func CreateCity(numNodes int, name string) *models.City {
 	city[14] = models.Node{ID: 14, Outputs: []models.Link{models.Link{Name: "Irigoyen", OriginID: 14, DestinyID: 10, Weight: 35}, models.Link{Name: "Urquiza", OriginID: 14, DestinyID: 13, Weight: 30}}}
 	city[15] = models.Node{ID: 15, Outputs: []models.Link{models.Link{Name: "Urquiza", OriginID: 15, DestinyID: 14, Weight: 30}}}
 	city[16] = models.Node{ID: 16, Outputs: []models.Link{models.Link{Name: "Justo", OriginID: 16, DestinyID: 12, Weight: 30}, models.Link{Name: "Urquiza", OriginID: 16, DestinyID: 15, Weight: 30}}}
-	myCity := models.NewCity(city, name)
-	myCity.AddService("hospital", 10, 5, 10)
-	myCity.AddService("firehouse", 11, 5, 15)
-	myCity.AddService("policeman", 16, 5, 5)
+	myCity := models.NewCity(city, "Fake Buenos Aires")
+
+	myCity.AddService("Hospital", 10, 5, 10)
+	myCity.AddService("FireDept", 11, 5, 15)
+	myCity.AddService("PoliceDept", 16, 5, 5)
+
 	myCity.LaunchVehicles()
 	return myCity
 }

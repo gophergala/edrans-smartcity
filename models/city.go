@@ -87,14 +87,16 @@ func (c *City) LaunchVehicles() {
 	}
 }
 
-func (c *City) CallService(service string) (*Vehicle, error) {
-	switch service {
-	case "doctor":
-		return c.callService("hospital", "ambulance")
-	case "fireman":
-		return c.callService("firehouse", "pumper")
+func (c *City) CallService(call string) (*Vehicle, error) {
+	switch call {
+	case "Medic":
+		return c.callService("Hospital", "ambulance")
+	case "Fireman":
+		return c.callService("FireDept", "pumper")
+	case "Police":
+		return c.callService("PoliceDept", "patrolman")
 	}
-	return c.callService("policeman", "patrolman")
+	return nil, fmt.Errorf("unknown service")
 }
 
 func (c *City) callService(service, name string) (*Vehicle, error) {
@@ -132,7 +134,7 @@ func (c *City) getLinked(node int) []Link {
 
 func (c *City) generateSem() {
 	for i := 0; i < len(c.nodes); i++ {
-		links := c.getLinked(i)
+		links := c.getLinked(c.nodes[i].ID)
 		if len(links) == 0 {
 			c.nodes[i].Sem = defaultSemaphore()
 			continue

@@ -9,9 +9,10 @@ import (
 )
 
 func main() {
+
 	var i int
-	city := factory.CreateCity(17, "Fake Buenos Aires")
-	vehicle, e := city.CallService("doctor")
+	city, _ := factory.CreateRectangularCity(3, 3, "Fake Buenos Aires")
+	vehicle, e := city.CallService("Medic")
 	if e != nil {
 		fmt.Println(e)
 		os.Exit(2)
@@ -22,6 +23,7 @@ func main() {
 		os.Exit(2)
 	}
 	path := algorithm.SortCandidates(algorithm.CalcEstimatesForVehicle(vehicle, paths))[0]
+	fmt.Println("24")
 	vehicle.Alert <- path
 	fmt.Scanf("%d", &i)
 	/*for i := 0; i < 1; i++ {

@@ -132,7 +132,7 @@ func (c *City) getLinked(node int) []Link {
 
 func (c *City) generateSem() {
 	for i := 0; i < len(c.nodes); i++ {
-		links := c.getLinked(i)
+		links := c.getLinked(c.nodes[i].ID)
 		if len(links) == 0 {
 			c.nodes[i].Sem = defaultSemaphore()
 			continue

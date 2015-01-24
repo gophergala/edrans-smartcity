@@ -1,9 +1,10 @@
-package algorithm
+package factory
 
 import "github.com/gophergala/edrans-smartcity/models"
 
-func GetTestCity() models.City {
-	var city = make([]models.Node, 17)
+func CreateCity(numNodes int, name string) *models.City {
+	var city = make([]models.Node, numNodes)
+
 	city[1] = models.Node{ID: 1, Outputs: []models.Link{models.Link{Name: "Roca", OriginID: 1, DestinyID: 2, Weight: 30}, models.Link{Name: "Pellegrini", OriginID: 1, DestinyID: 5, Weight: 30}}}
 	city[2] = models.Node{ID: 2, Outputs: []models.Link{models.Link{Name: "Roca", OriginID: 2, DestinyID: 3, Weight: 30}}}
 	city[3] = models.Node{ID: 3, Outputs: []models.Link{models.Link{Name: "Roca", OriginID: 3, DestinyID: 4, Weight: 30}, models.Link{Name: "Irigoyen", OriginID: 3, DestinyID: 7, Weight: 35}}}
@@ -20,14 +21,8 @@ func GetTestCity() models.City {
 	city[14] = models.Node{ID: 14, Outputs: []models.Link{models.Link{Name: "Irigoyen", OriginID: 14, DestinyID: 10, Weight: 35}, models.Link{Name: "Urquiza", OriginID: 14, DestinyID: 13, Weight: 30}}}
 	city[15] = models.Node{ID: 15, Outputs: []models.Link{models.Link{Name: "Urquiza", OriginID: 15, DestinyID: 14, Weight: 30}}}
 	city[16] = models.Node{ID: 16, Outputs: []models.Link{models.Link{Name: "Justo", OriginID: 16, DestinyID: 12, Weight: 30}, models.Link{Name: "Urquiza", OriginID: 16, DestinyID: 15, Weight: 30}}}
-	myCity := City{Nodes: city, Name: "Fake Buenos Aires"}
-	myCity.addService("hospital", 10, 5, 10)
-	myCity.addService("firehouse", 11, 5, 15)
-	myCity.addService("policeman", 16, 5, 5)
-	myCity.launchVehicles()
-	myCity.GenerateSem()
-	myCity.EnableSem()
-	return myCity
+
+	return models.NewCity(city, name)
 }
 
 /*

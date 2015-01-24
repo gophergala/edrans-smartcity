@@ -5,17 +5,18 @@ import (
 	"os"
 
 	"github.com/gophergala/edrans-smartcity/algorithm"
+	"github.com/gophergala/edrans-smartcity/factory"
 )
 
 func main() {
 	var i int
-	city := algorithm.GetTestCity()
+	city := factory.CreateCity(17, "Fake Buenos Aires")
 	vehicle, e := city.CallService("doctor")
 	if e != nil {
 		fmt.Println(e)
 		os.Exit(2)
 	}
-	paths, e := algorithm.GetPaths(&city, vehicle.Position.ID, 3)
+	paths, e := algorithm.GetPaths(city, vehicle.Position.ID, 3)
 	if e != nil {
 		fmt.Printf("Ohh no... %+v\n", e)
 		os.Exit(2)

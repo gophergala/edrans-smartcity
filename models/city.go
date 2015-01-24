@@ -6,7 +6,7 @@ import (
 )
 
 type City struct {
-	Nodes    []Node
+	nodes    []Node
 	Services []PublicService
 	Name     string
 
@@ -39,6 +39,18 @@ type Path struct {
 	ForgetMe         bool
 }
 
+func NewCity(nodeList []Node, name string) (city *City) {
+	myCity := City{nodes: nodeList, Name: name}
+	myCity.generateSem()
+	myCity.enableSem()
+
+	return &myCity
+}
+
+func (c *City) GetNumNodes() int {
+	return len(c.nodes)
+}
+
 func (c *City) addService(service string, location, vehicles, minWeight int) {
 	var newservice PublicService
 	newservice.Service = service
@@ -69,7 +81,7 @@ func (c *City) launchVehicles() {
 		} else {
 			go c.Services[i].readErrors(c)
 			for j := 0; j < len(c.Services[i].Vehicles); j++ {
-				go c.Services[i].Vehicles[j].patrol(rand.Int() % len(c.Nodes))
+				go c.Services[i].Vehicles[j].patrol(rand.Int() % len(c.nodes))
 			}
 		}
 	}
@@ -100,36 +112,36 @@ func (c *City) callService(service, name string) (*Vehicle, error) {
 	return nil, fmt.Errorf("There is no %s available", name)
 }
 
-func (c *City) EnableSem() {
-	for i := 1; i < len(c.Nodes); i++ {
-		c.Nodes[i].Sem.Status <- SemRequest{Status: false}
+func (c *City) enableSem() {
+	for i := 0; i < len(c.nodes); i++ {
+		c.nodes[i].Sem.Status <- SemRequest{Status: false}
 	}
 }
 
 func (c *City) getLinked(node int) []Link {
 	var links []Link
-	for i := 1; i < len(c.Nodes); i++ {
-		for j := 0; j < len(c.Nodes[i].Outputs); j++ {
-			if c.Nodes[i].Outputs[j].DestinyID == node {
-				links = append(links, c.Nodes[i].Outputs[j])
+	for i := 0; i < len(c.nodes); i++ {
+		for j := 0; j < len(c.nodes[i].Outputs); j++ {
+			if c.nodes[i].Outputs[j].DestinyID == node {
+				links = append(links, c.nodes[i].Outputs[j])
 			}
 		}
 	}
 	return links
 }
 
-func (c *City) GenerateSem() {
-	for i := 1; i < len(c.Nodes); i++ {
+func (c *City) generateSem() {
+	for i := 0; i < len(c.nodes); i++ {
 		links := c.getLinked(i)
 		if len(links) == 0 {
-			c.Nodes[i].Sem = defaultSemaphore()
+			c.nodes[i].Sem = defaultSemaphore()
 			continue
 		}
 		var sem Semaphore
 		sem.Interval = defaultInterval
 		sem.Inputs = links
 		sem.Status = make(chan SemRequest, 1)
-		c.Nodes[i].Sem = sem
+		c.nodes[i].Sem = sem
 		go sem.Start()
 	}
 }
@@ -138,9 +150,9 @@ func (c *City) GetNode(ID int) *Node {
 	if c.LastError != nil {
 		return nil
 	}
-	if len(c.Nodes) < ID {
+	if len(c.nodes) < ID || ID <= 0 {
 		c.LastError = fmt.Errorf("Node %d does not exist", ID)
 		return nil
 	}
-	return &c.Nodes[ID]
+	return &c.nodes[ID-1]
 }

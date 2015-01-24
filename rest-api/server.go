@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/gophergala/edrans-smartcity/algorithm"
 	"github.com/gophergala/edrans-smartcity/models"
@@ -37,6 +38,7 @@ func main() {
 
 	muxRouter.Handle("/city", handler(getCity)).Methods("GET")
 	muxRouter.Handle("/emergency", handler(postEmergency)).Methods("POST")
+	muxRouter.HandleFunc("/index", handleFile("index.html"))
 
 	http.Handle("/", muxRouter)
 	listener, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", port))
@@ -110,7 +112,21 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 		response = e
 		return
 	}
-	paths := algorithm.GetPaths(city, vehicle.Position.ID, emergency.Where)
-	paths = vehicle.CalcPaths(paths)
+	paths, e := algorithm.GetPaths(&city, vehicle.Position.ID, emergency.Where)
+	if e != nil {
+		status = 400
+		response = e
+		return
+	}
+	paths = algorithm.CalcEstimatesForVehicle(vehicle, paths)
+	vehicle.Alert <- algorithm.SortCandidates(paths)[0]
+	response = fmt.Sprintf("%s on the way to %d", emergency.Service, emergency.Where)
 	return
+}
+
+func handleFile(path string) http.HandlerFunc {
+	path = filepath.Join("", path)
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, path)
+	}
 }

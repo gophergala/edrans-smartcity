@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -9,16 +10,17 @@ import (
 	"os"
 
 	//"github.com/gophergala/edrans-smartcity/models"
+	//"github.com/gophergala/edrans-smartcity/generators"
 	"github.com/gorilla/mux"
 )
 
 var sessions map[ID]models.City
 
 type ID string
-type handler func(w http.ResponseWriter, r *http.Request, ctx *context)
+type handler func(w http.ResponseWriter, r *http.Request, ctx *context) (int, interface{})
 
 type context struct {
-	Body   string
+	Body   []byte
 	CityID ID
 }
 
@@ -41,7 +43,7 @@ func main() {
 		fmt.Println("Cannot launch server:", err)
 		os.Exit(2)
 	}
-	fmt.Printf("Listening on port %s...\n", conf.ApiPort)
+	fmt.Printf("Listening on port %s...\n", port)
 	http.Serve(listener, nil)
 
 }
@@ -56,20 +58,35 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if e != nil {
 	}
 
-	ctx.CityID = r.Header.Get("my-city")
-	status, response := h(w, r, ctx)
+	ctx.CityID = ID(r.Header.Get("my-city"))
+	status, response := h(w, r, &ctx)
 	if status == 0 {
 		status = 200
 	}
 	if response == nil {
 		response = map[string]string{"status": "ok"}
 	}
-	responseJSON, _ := json.Marhsal(response)
+	if status < 200 || status >= 300 {
+		response = map[string]interface{}{"error": response}
+	}
+	responseJSON, _ := json.Marshal(response)
 	w.WriteHeader(status)
 	w.Write(responseJSON)
 }
 
 func getCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
+	if ctx.CityID != "" {
+		status = 403
+		response = "You already have a city"
+		return
+	}
+	city, e := generators.NewCity()
+	response = city
+	if e != nil {
+		status = 400
+		response = e
+	}
+	return
 }
 
 type emergencyRequest struct {
@@ -78,4 +95,20 @@ type emergencyRequest struct {
 }
 
 func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
+	var emergency emergencyRequest
+	e := json.Unmarshal(ctx.Body, &emergency)
+	if e != nil {
+		status = 400
+		response = e
+		return
+	}
+	vehicle, e := sessions[ctx.CityID].CallService(emergency.Service)
+	if e != nil {
+		status = 400
+		response = e
+		return
+	}
+	paths := sessions[ctx.CityID].GetPaths(vehicle.Position.ID, emergency.Where)
+	paths = vehicle.CalcPaths(paths)
+	return
 }

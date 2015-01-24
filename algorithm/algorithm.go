@@ -68,10 +68,10 @@ func GetPaths(c *models.City, origin, destiny int) ([]models.Path, error) {
 	org := c.GetNode(origin)
 	dest := c.GetNode(destiny)
 	candidates := getCandidates(c, org, dest, nil)
-	return orderLinks(candidates), c.LastError
+	return sortLinks(candidates), c.LastError
 }
 
-func orderLinks(paths []models.Path) []models.Path {
+func sortLinks(paths []models.Path) []models.Path {
 	for i := 0; i < len(paths); i++ {
 		var lnk = make([]models.Link, len(paths[i].Links))
 		for j := 0; j < len(lnk); j++ {

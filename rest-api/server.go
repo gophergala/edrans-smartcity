@@ -11,19 +11,18 @@ import (
 	"path/filepath"
 
 	"github.com/gophergala/edrans-smartcity/algorithm"
+	"github.com/gophergala/edrans-smartcity/factory"
 	"github.com/gophergala/edrans-smartcity/models"
-	//"github.com/gophergala/edrans-smartcity/generators"
 	"github.com/gorilla/mux"
 )
 
-var sessions map[ID]models.City
+var sessions map[string]*models.City
 
-type ID string
 type handler func(w http.ResponseWriter, r *http.Request, ctx *context) (int, interface{})
 
 type context struct {
 	Body   []byte
-	CityID ID
+	CityID string
 }
 
 func main() {
@@ -31,13 +30,14 @@ func main() {
 	flag.IntVar(&port, "port", 2489, "port server will be launched")
 	flag.Parse()
 
-	sessions = make(map[ID]models.City)
+	sessions = make(map[string]*models.City)
 
 	muxRouter := mux.NewRouter()
 	muxRouter.StrictSlash(false)
 
 	muxRouter.Handle("/city", handler(getCity)).Methods("GET")
 	muxRouter.Handle("/emergency", handler(postEmergency)).Methods("POST")
+	muxRouter.Handle("/sample-city", handler(postSampleCity)).Methods("POST")
 	muxRouter.HandleFunc("/index", handleFile("index.html"))
 
 	http.Handle("/", muxRouter)
@@ -48,20 +48,19 @@ func main() {
 	}
 	fmt.Printf("Listening on port %s...\n", port)
 	http.Serve(listener, nil)
-
 }
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var ctx context
 	var e error
-	var ok bool
 
 	ctx.Body, e = ioutil.ReadAll(r.Body)
 	if e != nil {
+		fmt.Println("Error when reading body!")
 	}
 
-	ctx.CityID = ID(r.Header.Get("my-city"))
+	ctx.CityID = r.Header.Get("city-name")
 	status, response := h(w, r, &ctx)
 	if status == 0 {
 		status = 200
@@ -77,18 +76,51 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write(responseJSON)
 }
 
+func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
+	type cityParams struct {
+		SizeHorizontal int    `json:"size-horizontal"`
+		SizeVertical   int    `json:"size-vertical"`
+		Name           string `json:"name"`
+	}
+	type cityOut struct {
+		CityName string `json:"city-name"`
+	}
+	var in cityParams
+	err := json.Unmarshal(ctx.Body, &in)
+	if err != nil {
+		status = http.StatusBadRequest
+		fmt.Printf("error in body %+v\n", string(ctx.Body))
+		response = "invalid json body"
+		return
+	}
+
+	sessions[in.Name], err = factory.CreateRectangularCity(in.SizeHorizontal, in.SizeVertical, in.Name)
+	if err != nil {
+		status = 400
+		response = fmt.Sprintf("Error: %s", err)
+		return
+	}
+
+	response = cityOut{
+		CityName: in.Name,
+	}
+
+	return
+}
+
 func getCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
 	if ctx.CityID != "" {
 		status = 403
 		response = "You already have a city"
 		return
 	}
-	city, e := generators.NewCity()
+
+	city := factory.SampleCity() // TODO MUST REPLACE THIS
 	response = city
-	if e != nil {
+	/*if e != nil {
 		status = 400
 		response = e
-	}
+	}*/
 	return
 }
 
@@ -112,7 +144,7 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 		response = e
 		return
 	}
-	paths, e := algorithm.GetPaths(&city, vehicle.Position.ID, emergency.Where)
+	paths, e := algorithm.GetPaths(city, vehicle.Position.ID, emergency.Where)
 	if e != nil {
 		status = 400
 		response = e

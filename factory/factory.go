@@ -31,7 +31,7 @@ func CreateRectangularCity(m int, n int, name string) (myCity *models.City, err 
 				if currNeighbour := neighbourList[k]; currNeighbour != -1 {
 					linkList = append(linkList,
 						models.Link{
-							Name:      strconv.Itoa(currID) + "to" + strconv.Itoa(currNeighbour) + "St.",
+							Name:      strconv.Itoa(currID) + "-to-" + strconv.Itoa(currNeighbour) + "St.",
 							OriginID:  currID,
 							DestinyID: currNeighbour,
 							Weight:    getRandomWeight(),

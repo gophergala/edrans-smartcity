@@ -1,8 +1,40 @@
 package algorithm
 
-import "fmt"
+import (
+	"github.com/gophergala/edrans-smartcity/models"
 
-/*func (c City) GetPath(origin, destiny int, service string) (*Path, error) {
+	"fmt"
+)
+
+func getCandidates(c *models.City, origin, dest *models.Node, visited []int) []models.Path {
+	if c.LastError != nil {
+		return nil
+	}
+	vlen := len(visited)
+	var paths = make([]models.Path, 0)
+	for i := 0; i < len(origin.Outputs); i++ {
+		if origin.Outputs[i].DestinyID == dest.ID {
+			paths = append(paths, models.Path{Reached: true, Links: []models.Link{origin.Outputs[i]}})
+			continue
+		}
+		if alreadyVisited(origin.Outputs[i].DestinyID, visited) {
+			continue
+		}
+		visited = append(visited, origin.Outputs[i].DestinyID)
+		subPaths := getCandidates(c, c.GetNode(origin.Outputs[i].DestinyID), dest, visited)
+		for j := 0; j < len(subPaths); j++ {
+			lnks := subPaths[j].Links
+			lnks = append(lnks, origin.Outputs[i])
+			paths = append(paths, models.Path{Links: lnks, Reached: subPaths[j].Reached})
+		}
+	}
+	if vlen == 0 && len(paths) == 0 {
+		c.LastError = fmt.Errorf("There's no way to the requested address")
+	}
+	return paths
+}
+
+/*func (c *City) GetPath(origin, destiny int, service string) (*Path, error) {
 	if origin == destiny {
 		return nil, fmt.Errorf("Already at destiny")
 	}
@@ -10,75 +42,15 @@ import "fmt"
 	dest := c.getNode(destiny)
 	candidates := c.getCandidates(org, dest, nil)
 	vehicle := CallService(service)
-	if c.err != nil || len(candidates) == 0 {
-		return nil, c.err
+	if c.LastError != nil || len(candidates) == 0 {
+		return nil, c.LastError
 	}
 	candidates = calcEstimates(candidates)
 	vehicle.InCity = &c
 	candidates = vehicle.CalcPaths(candidates)
 	candidates = OrderCandidates(candidates)
-	return &candidates[0], c.err
+	return &candidates[0], c.LastError
 }*/
-
-func (c City) GetPaths(origin, destiny int) ([]Path, error) {
-	if origin == destiny {
-		return nil, fmt.Errorf("Already at destiny")
-	}
-	org := c.getNode(origin)
-	dest := c.getNode(destiny)
-	candidates := c.getCandidates(org, dest, nil)
-	return orderLinks(candidates), c.err
-}
-
-func orderLinks(paths []Path) []Path {
-	for i := 0; i < len(paths); i++ {
-		var lnk = make([]Link, len(paths[i].Links))
-		for j := 0; j < len(lnk); j++ {
-			lnk[j] = paths[i].Links[len(lnk)-1-j]
-		}
-		paths[i].Links = lnk
-	}
-	return paths
-}
-
-func (c City) getNode(ID int) *Node {
-	if c.err != nil {
-		return nil
-	}
-	if len(c.Nodes) < ID {
-		c.err = fmt.Errorf("Node %d does not exist", ID)
-		return nil
-	}
-	return &c.Nodes[ID]
-}
-
-func (c *City) getCandidates(org, dst *Node, visited []int) []Path {
-	if c.err != nil {
-		return nil
-	}
-	vlen := len(visited)
-	var paths = make([]Path, 0)
-	for i := 0; i < len(org.Outputs); i++ {
-		if org.Outputs[i].DestinyID == dst.ID {
-			paths = append(paths, Path{Reached: true, Links: []Link{org.Outputs[i]}})
-			continue
-		}
-		if alreadyVisited(org.Outputs[i].DestinyID, visited) {
-			continue
-		}
-		visited = append(visited, org.Outputs[i].DestinyID)
-		subPaths := c.getCandidates(c.getNode(org.Outputs[i].DestinyID), dst, visited)
-		for j := 0; j < len(subPaths); j++ {
-			lnks := subPaths[j].Links
-			lnks = append(lnks, org.Outputs[i])
-			paths = append(paths, Path{Links: lnks, Reached: subPaths[j].Reached})
-		}
-	}
-	if vlen == 0 && len(paths) == 0 {
-		c.err = fmt.Errorf("There's no way to the requested address")
-	}
-	return paths
-}
 
 func alreadyVisited(ID int, visited []int) bool {
 	for i := 0; i < len(visited); i++ {
@@ -89,7 +61,29 @@ func alreadyVisited(ID int, visited []int) bool {
 	return false
 }
 
-func calcEstimates(paths []Path) []Path {
+func GetPaths(c *models.City, origin, destiny int) ([]models.Path, error) {
+	if origin == destiny {
+		return nil, fmt.Errorf("Already at destiny")
+	}
+	org := c.GetNode(origin)
+	dest := c.GetNode(destiny)
+	candidates := getCandidates(c, org, dest, nil)
+	return orderLinks(candidates), c.LastError
+}
+
+func orderLinks(paths []models.Path) []models.Path {
+	for i := 0; i < len(paths); i++ {
+		var lnk = make([]models.Link, len(paths[i].Links))
+		for j := 0; j < len(lnk); j++ {
+			lnk[j] = paths[i].Links[len(lnk)-1-j]
+		}
+		paths[i].Links = lnk
+	}
+	return paths
+}
+
+/*
+func calcEstimates(paths []models.Path) []models.Path {
 	for i := 0; i < len(paths); i++ {
 		for j := 0; j < len(paths[i].Links); j++ {
 			paths[i].OriginalEstimate += paths[i].Links[j].Weight
@@ -97,8 +91,9 @@ func calcEstimates(paths []Path) []Path {
 	}
 	return paths
 }
+*/
 
-func OrderCandidates(paths []Path) []Path {
+func SortCandidates(paths []models.Path) []models.Path {
 	var done bool
 	var x int
 	for i := 0; i < len(paths) && !done; i++ {
@@ -116,7 +111,7 @@ func OrderCandidates(paths []Path) []Path {
 	return paths
 }
 
-func (v *Vehicle) CalcPaths(paths []Path) []Path {
+func CalcEstimatesForVehicle(v *models.Vehicle, paths []models.Path) []models.Path {
 	for i := 0; i < len(paths); i++ {
 		if len(paths[i].Links) == 0 {
 			continue

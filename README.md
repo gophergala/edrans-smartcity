@@ -63,4 +63,4 @@ NO ES LA MISMA LA VELOCIDAD A LA QUE PUEDE IR UN PATRULLERO QUE A LA QUE PUEDE I
 La libreria del algoritmo debe devolver error si:
 - El id del inicio no existe
 - El id del final no existe
-- Las coordenadas no corresponden a nodos (en caso de llegar a implementar geolocolizacion)
+- Las coordenadas no corresponden a nodos (en caso de llegar a implementar geolocalizacion)

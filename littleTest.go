@@ -12,15 +12,15 @@ func main() {
 	city := algorithm.GetTestCity()
 	vehicle, e := city.CallService("doctor")
 	if e != nil {
-		fmt.Printf("Ohh no... %+v\n", e)
+		fmt.Println(e)
 		os.Exit(2)
 	}
-	paths, e := city.GetPaths(vehicle.Position.ID, 3)
+	paths, e := algorithm.GetPaths(&city, vehicle.Position.ID, 3)
 	if e != nil {
 		fmt.Printf("Ohh no... %+v\n", e)
 		os.Exit(2)
 	}
-	path := algorithm.OrderCandidates(vehicle.CalcPaths(paths))[0]
+	path := algorithm.SortCandidates(algorithm.CalcEstimatesForVehicle(vehicle, paths))[0]
 	fmt.Println("24")
 	vehicle.Alert <- path
 	fmt.Scanf("%d", &i)

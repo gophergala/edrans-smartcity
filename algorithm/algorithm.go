@@ -1,11 +1,8 @@
 package algorithm
 
-import (
-	"fmt"
-	"time"
-)
+import "fmt"
 
-func (c City) GetPath(origin, destiny int, service string) (*Path, error) {
+/*func (c City) GetPath(origin, destiny int, service string) (*Path, error) {
 	if origin == destiny {
 		return nil, fmt.Errorf("Already at destiny")
 	}
@@ -21,7 +18,7 @@ func (c City) GetPath(origin, destiny int, service string) (*Path, error) {
 	candidates = vehicle.CalcPaths(candidates)
 	candidates = OrderCandidates(candidates)
 	return &candidates[0], c.err
-}
+}*/
 
 func (c City) GetPaths(origin, destiny int) ([]Path, error) {
 	if origin == destiny {
@@ -147,17 +144,4 @@ func (v *Vehicle) CalcPaths(paths []Path) []Path {
 		paths[i].Estimate = weight
 	}
 	return paths
-}
-
-func (v *Vehicle) Run(path Path) time.Duration {
-	now := time.Now()
-	var i int
-	for i = 0; i < len(path.Links); i++ {
-		v.InCity.getNode(path.Links[i].DestinyID).Sem.Status <- SemRequest{Status: true, Allow: path.Links[i].Name}
-		time.Sleep(time.Duration(path.Weights[i]) * time.Second)
-		v.InCity.getNode(path.Links[i].DestinyID).Sem.Status <- SemRequest{Status: false, Allow: path.Links[i].Name}
-		v.Position = v.InCity.getNode(path.Links[i].DestinyID)
-		fmt.Printf("Position: %+v\n", v.Position)
-	}
-	return time.Since(now)
 }

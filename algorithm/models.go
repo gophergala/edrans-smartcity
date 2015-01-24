@@ -1,11 +1,21 @@
 package algorithm
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type City struct {
-	Nodes []Node
-	Name  string
-	err   error
+	Nodes    []Node
+	Services []PublicService
+	Name     string
+	err      error
+}
+
+type PublicService struct {
+	Location int //NodeID
+	Service  string
+	Vehicles []Vehicle
 }
 
 type Node struct {
@@ -48,28 +58,75 @@ type Path struct {
 type Vehicle struct {
 	Service   string
 	MinWeight int
+	Busy      bool
+	Alert     chan Path
+	Errors    chan error
 	InCity    *City
 	Position  *Node
 }
 
-func CallService(service string) Vehicle {
+func (v *Vehicle) Patrol(start int) {
+	patrol := time.After(1 * time.Second)
+	for {
+		select {
+		case <-patrol:
+			node := v.InCity.getNode(start)
+			if len(node.Outputs) == 0 {
+				v.Errors <- fmt.Errorf("can not go on patrol")
+			}
+			v.Position = node
+			patrol = time.After(time.Duration(node.Outputs[0].Weight) * time.Second)
+			start = node.Outputs[0].DestinyID
+		case path := <-v.Alert:
+			v.run(path)
+			v.Position = v.InCity.getNode(path.Links[len(path.Links)-1].DestinyID)
+			start = v.Position.ID
+		}
+	}
+}
+
+func (v *Vehicle) await() {
+	for {
+		path := <-v.Alert
+		v.run(path)
+	}
+}
+
+func (c *City) CallService(service string) (*Vehicle, error) {
 	switch service {
 	case "doctor":
-		return callDoctors()
+		return c.callService("hospital", "ambulance")
 	case "fireman":
-		return callFiremen()
+		return c.callService("firehouse", "pumper")
 	}
-	return callPolicemen()
+	return c.callService("policeman", "patrolman")
 }
 
-func callDoctors() Vehicle {
-	return Vehicle{Service: "Ambulance", MinWeight: 10}
+func (c *City) callService(service, name string) (*Vehicle, error) {
+	var base PublicService
+	for i := 0; i < len(c.Services); i++ {
+		if c.Services[i].Service == service {
+			base = c.Services[i]
+		}
+	}
+	for i := 0; i < len(base.Vehicles); i++ {
+		if !base.Vehicles[i].Busy {
+			return &base.Vehicles[i], nil
+		}
+	}
+	return nil, fmt.Errorf("There is no %s available", name)
 }
 
-func callFiremen() Vehicle {
-	return Vehicle{Service: "Pumper", MinWeight: 15}
-}
-
-func callPolicemen() Vehicle {
-	return Vehicle{Service: "Patrolman", MinWeight: 5}
+func (v *Vehicle) run(path Path) time.Duration {
+	v.Busy = true
+	now := time.Now()
+	var i int
+	for i = 0; i < len(path.Links); i++ {
+		v.InCity.getNode(path.Links[i].DestinyID).Sem.Status <- SemRequest{Status: true, Allow: path.Links[i].Name}
+		time.Sleep(time.Duration(path.Weights[i]) * time.Second)
+		v.InCity.getNode(path.Links[i].DestinyID).Sem.Status <- SemRequest{Status: false, Allow: path.Links[i].Name}
+		v.Position = v.InCity.getNode(path.Links[i].DestinyID)
+	}
+	v.Busy = false
+	return time.Since(now)
 }

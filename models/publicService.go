@@ -17,6 +17,6 @@ func (s *PublicService) readErrors(c *City) {
 		<-s.Errors
 		newPatrolman := Vehicle{Service: "policeman", MinWeight: 5, Alert: make(chan Path, 1), Errors: s.Errors, InCity: c}
 		s.Vehicles = append(s.Vehicles, newPatrolman)
-		go newPatrolman.patrol(rand.Int() % len(c.Nodes))
+		go newPatrolman.patrol(rand.Int() % c.GetNumNodes())
 	}
 }

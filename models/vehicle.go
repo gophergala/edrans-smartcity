@@ -22,6 +22,10 @@ func (v *Vehicle) patrol(start int) {
 		select {
 		case <-patrol:
 			node := v.InCity.GetNode(start)
+			if node == nil {
+				v.Errors <- fmt.Errorf("can not go on patrol")
+				return
+			}
 			if len(node.Outputs) == 0 {
 				v.Errors <- fmt.Errorf("can not go on patrol")
 				return

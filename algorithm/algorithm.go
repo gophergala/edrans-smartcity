@@ -29,6 +29,7 @@ func (c *City) getCandidates(org, dst *Node, visited []int) []Path {
 	if c.err != nil {
 		return nil
 	}
+	vlen := len(visited)
 	var paths = make([]Path, 0)
 	for i := 0; i < len(org.Outputs); i++ {
 		if org.Outputs[i].DestinyID == dst.ID {
@@ -45,6 +46,9 @@ func (c *City) getCandidates(org, dst *Node, visited []int) []Path {
 			lnks = append(lnks, org.Outputs[i])
 			paths = append(paths, Path{Links: lnks, Reached: subPaths[j].Reached})
 		}
+	}
+	if vlen == 0 && len(paths) == 0 {
+		c.err = fmt.Errorf("There's no way to the requested address")
 	}
 	return paths
 }

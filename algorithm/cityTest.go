@@ -1,13 +1,8 @@
 package algorithm
 
-import (
-	"container/ring"
-	"fmt"
-	"time"
-)
+import "time"
 
 var (
-	defaultSem      = Semaphore{Inputs: ring.New(0), ActiveInput: nil, Interval: defaultInterval, Status: make(chan SemRequest, 1), Paused: false}
 	defaultInterval = 1 * time.Minute
 )
 
@@ -31,7 +26,7 @@ func GetTestCity() City {
 	city[16] = Node{ID: 16, Outputs: []Link{Link{Name: "Justo", OriginID: 16, DestinyID: 12, Weight: 30}, Link{Name: "Urquiza", OriginID: 16, DestinyID: 15, Weight: 30}}}
 	myCity := City{Nodes: city, Name: "Fake Buenos Aires"}
 	myCity.GenerateSem()
-	//myCity.EnableSem()
+	myCity.EnableSem()
 	return myCity
 }
 
@@ -63,26 +58,19 @@ func (c City) GenerateSem() {
 		}
 		var sem Semaphore
 		sem.Interval = defaultInterval
-		sem.Inputs = ring.New(len(links))
-		for j := 0; j < len(links); j++ {
-			sem.Inputs = sem.Inputs.Next()
-			sem.ActiveInput, _ = sem.Inputs.Next().Value.(*Link)
-			sem.Inputs.Value = &links[j]
-			sem.ActiveInput, _ = sem.Inputs.Next().Value.(*Link)
-		}
-		sem.Status = make(chan SemRequest, 500)
+		sem.Inputs = links
+		sem.Status = make(chan SemRequest, 1)
+		c.Nodes[i].Sem = sem
 		go sem.Start()
 	}
 }
 
 func defaultSemaphore() Semaphore {
-	return Semaphore{Inputs: ring.New(0), ActiveInput: nil, Interval: defaultInterval, Status: make(chan SemRequest, 1), Paused: false}
+	return Semaphore{Inputs: make([]Link, 0), ActiveInput: nil, Interval: defaultInterval, Status: make(chan SemRequest, 1), Paused: false}
 }
 
 func (c City) EnableSem() {
-	fmt.Println("len:", len(c.Nodes))
 	for i := 1; i < len(c.Nodes); i++ {
-		fmt.Println("#85,", i)
 		c.Nodes[i].Sem.Status <- SemRequest{Status: false}
 	}
 }
@@ -101,22 +89,28 @@ func (c City) getLinked(node int) []Link {
 
 func (sem *Semaphore) Start() {
 	change := time.After(sem.Interval)
+	var current int
+	if len(sem.Inputs) > 0 {
+		sem.ActiveInput = &sem.Inputs[current]
+	}
 	for {
 		select {
 		case <-change:
 			if !sem.Paused {
-				sem.ActiveInput = sem.Inputs.Next().Value.(*Link)
-				sem.Inputs = sem.Inputs.Next()
+				if len(sem.Inputs) > current+1 {
+					sem.ActiveInput = &sem.Inputs[current+1]
+					if len(sem.Inputs) == current+1 {
+						current = -1
+					}
+				}
 			}
 			change = time.After(sem.Interval)
 		case req := <-sem.Status:
 			sem.Paused = req.Status
 			if req.Status {
-				for i := 0; i < sem.Inputs.Len(); i++ {
-					sem.Inputs = sem.Inputs.Next()
-					if sem.Inputs.Next().Value.(*Link).Name == req.Allow {
-						sem.ActiveInput = sem.Inputs.Next().Value.(*Link)
-						sem.Inputs = sem.Inputs.Next()
+				for i := 0; i < len(sem.Inputs); i++ {
+					if sem.Inputs[i].Name == req.Allow {
+						sem.ActiveInput = &sem.Inputs[i]
 					}
 				}
 			} else {

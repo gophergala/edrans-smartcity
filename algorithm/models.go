@@ -1,9 +1,6 @@
 package algorithm
 
-import (
-	"container/ring"
-	"time"
-)
+import "time"
 
 type City struct {
 	Nodes []Node
@@ -27,7 +24,7 @@ type Link struct {
 }
 
 type Semaphore struct {
-	Inputs      *ring.Ring
+	Inputs      []Link
 	ActiveInput *Link
 	Interval    time.Duration
 	Status      chan SemRequest
@@ -45,4 +42,31 @@ type Path struct {
 	OriginalEstimate int
 	Reached          bool
 	ForgetMe         bool
+}
+
+type Vehicle struct {
+	Service   string
+	MinWeight int
+}
+
+func callService(service string) Vehicle {
+	switch service {
+	case "doctor":
+		return callDoctors()
+	case "fireman":
+		return callFiremen()
+	}
+	return callPolicemen()
+}
+
+func callDoctors() Vehicle {
+	return Vehicle{Service: "Ambulance", MinWeight: 10}
+}
+
+func callFiremen() Vehicle {
+	return Vehicle{Service: "Pumper", MinWeight: 15}
+}
+
+func callPolicemen() Vehicle {
+	return Vehicle{Service: "Patrolman", MinWeight: 5}
 }

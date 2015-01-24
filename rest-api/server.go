@@ -9,7 +9,8 @@ import (
 	"net/http"
 	"os"
 
-	//"github.com/gophergala/edrans-smartcity/models"
+	"github.com/gophergala/edrans-smartcity/algorithm"
+	"github.com/gophergala/edrans-smartcity/models"
 	//"github.com/gophergala/edrans-smartcity/generators"
 	"github.com/gorilla/mux"
 )
@@ -102,13 +103,14 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 		response = e
 		return
 	}
-	vehicle, e := sessions[ctx.CityID].CallService(emergency.Service)
+	city := sessions[ctx.CityID]
+	vehicle, e := city.CallService(emergency.Service)
 	if e != nil {
 		status = 400
 		response = e
 		return
 	}
-	paths := sessions[ctx.CityID].GetPaths(vehicle.Position.ID, emergency.Where)
+	paths := algorithm.GetPaths(city, vehicle.Position.ID, emergency.Where)
 	paths = vehicle.CalcPaths(paths)
 	return
 }

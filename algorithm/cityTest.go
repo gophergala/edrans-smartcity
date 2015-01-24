@@ -20,11 +20,11 @@ func GetTestCity() models.City {
 	city[14] = models.Node{ID: 14, Outputs: []models.Link{models.Link{Name: "Irigoyen", OriginID: 14, DestinyID: 10, Weight: 35}, models.Link{Name: "Urquiza", OriginID: 14, DestinyID: 13, Weight: 30}}}
 	city[15] = models.Node{ID: 15, Outputs: []models.Link{models.Link{Name: "Urquiza", OriginID: 15, DestinyID: 14, Weight: 30}}}
 	city[16] = models.Node{ID: 16, Outputs: []models.Link{models.Link{Name: "Justo", OriginID: 16, DestinyID: 12, Weight: 30}, models.Link{Name: "Urquiza", OriginID: 16, DestinyID: 15, Weight: 30}}}
-	myCity := City{Nodes: city, Name: "Fake Buenos Aires"}
-	myCity.addService("hospital", 10, 5, 10)
-	myCity.addService("firehouse", 11, 5, 15)
-	myCity.addService("policeman", 16, 5, 5)
-	myCity.launchVehicles()
+	myCity := models.City{Nodes: city, Name: "Fake Buenos Aires"}
+	myCity.AddService("hospital", 10, 5, 10)
+	myCity.AddService("firehouse", 11, 5, 15)
+	myCity.AddService("policeman", 16, 5, 5)
+	myCity.LaunchVehicles()
 	myCity.GenerateSem()
 	myCity.EnableSem()
 	return myCity

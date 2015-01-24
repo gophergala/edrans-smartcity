@@ -46,7 +46,6 @@ func (v *Vehicle) wait() {
 }
 
 func (v *Vehicle) run(path Path) time.Duration {
-	fmt.Println("running")
 	v.Busy = true
 	now := time.Now()
 	var i int

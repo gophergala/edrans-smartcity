@@ -39,7 +39,7 @@ type Path struct {
 	ForgetMe         bool
 }
 
-func (c *City) addService(service string, location, vehicles, minWeight int) {
+func (c *City) AddService(service string, location, vehicles, minWeight int) {
 	var newservice PublicService
 	newservice.Service = service
 	newservice.Location = location
@@ -60,7 +60,7 @@ func (c *City) addService(service string, location, vehicles, minWeight int) {
 	c.Services = append(c.Services, newservice)
 }
 
-func (c *City) launchVehicles() {
+func (c *City) LaunchVehicles() {
 	for i := 0; i < len(c.Services); i++ {
 		if c.Services[i].Service == "hospital" || c.Services[i].Service == "firehouse" {
 			for j := 0; j < len(c.Services[i].Vehicles); j++ {

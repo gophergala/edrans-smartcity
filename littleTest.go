@@ -21,7 +21,6 @@ func main() {
 		os.Exit(2)
 	}
 	path := algorithm.SortCandidates(algorithm.CalcEstimatesForVehicle(vehicle, paths))[0]
-	fmt.Println("24")
 	vehicle.Alert <- path
 	fmt.Scanf("%d", &i)
 	/*for i := 0; i < 1; i++ {

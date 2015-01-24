@@ -38,6 +38,7 @@ type SemRequest struct {
 
 type Path struct {
 	Links            []Link
+	Weights          []int
 	Estimate         int
 	OriginalEstimate int
 	Reached          bool
@@ -47,9 +48,11 @@ type Path struct {
 type Vehicle struct {
 	Service   string
 	MinWeight int
+	InCity    *City
+	Position  *Node
 }
 
-func callService(service string) Vehicle {
+func CallService(service string) Vehicle {
 	switch service {
 	case "doctor":
 		return callDoctors()

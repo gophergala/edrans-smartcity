@@ -1,17 +1,47 @@
 package algorithm
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
-func (c City) GetPath(origin, destiny int) ([]Path, error) {
+func (c City) GetPath(origin, destiny int, service string) (*Path, error) {
 	if origin == destiny {
 		return nil, fmt.Errorf("Already at destiny")
 	}
 	org := c.getNode(origin)
 	dest := c.getNode(destiny)
 	candidates := c.getCandidates(org, dest, nil)
+	vehicle := CallService(service)
+	if c.err != nil || len(candidates) == 0 {
+		return nil, c.err
+	}
 	candidates = calcEstimates(candidates)
-	candidates = orderCandidates(candidates)
-	return candidates, c.err
+	vehicle.InCity = &c
+	candidates = vehicle.CalcPaths(candidates)
+	candidates = OrderCandidates(candidates)
+	return &candidates[0], c.err
+}
+
+func (c City) GetPaths(origin, destiny int) ([]Path, error) {
+	if origin == destiny {
+		return nil, fmt.Errorf("Already at destiny")
+	}
+	org := c.getNode(origin)
+	dest := c.getNode(destiny)
+	candidates := c.getCandidates(org, dest, nil)
+	return orderLinks(candidates), c.err
+}
+
+func orderLinks(paths []Path) []Path {
+	for i := 0; i < len(paths); i++ {
+		var lnk = make([]Link, len(paths[i].Links))
+		for j := 0; j < len(lnk); j++ {
+			lnk[j] = paths[i].Links[len(lnk)-1-j]
+		}
+		paths[i].Links = lnk
+	}
+	return paths
 }
 
 func (c City) getNode(ID int) *Node {
@@ -71,13 +101,13 @@ func calcEstimates(paths []Path) []Path {
 	return paths
 }
 
-func orderCandidates(paths []Path) []Path {
+func OrderCandidates(paths []Path) []Path {
 	var done bool
 	var x int
 	for i := 0; i < len(paths) && !done; i++ {
 		done = true
 		for j := 0; j < len(paths)-x-1; j++ {
-			if paths[i].OriginalEstimate > paths[i+1].OriginalEstimate {
+			if paths[i].Estimate > paths[i+1].Estimate {
 				aux := paths[i]
 				paths[i] = paths[i+1]
 				paths[i+1] = aux
@@ -87,4 +117,47 @@ func orderCandidates(paths []Path) []Path {
 		}
 	}
 	return paths
+}
+
+func (v *Vehicle) CalcPaths(paths []Path) []Path {
+	for i := 0; i < len(paths); i++ {
+		if len(paths[i].Links) == 0 {
+			continue
+		}
+		paths[i].Weights = make([]int, 0)
+		lastLink := paths[i].Links[0]
+		weight := paths[i].Links[0].Weight
+		paths[i].Weights = append(paths[i].Weights, paths[i].Links[0].Weight)
+	LinksLoop:
+		for j := 1; j < len(paths[i].Links); j++ {
+			if paths[i].Links[j].Name == lastLink.Name {
+				paths[i].Weights = append(paths[i].Weights, paths[i].Links[j].Weight)
+				weight += paths[i].Links[j].Weight
+				lastLink = paths[i].Links[j]
+				continue LinksLoop
+			}
+			newLinkWeight := paths[i].Links[j].Weight - lastLink.Weight
+			if newLinkWeight < v.MinWeight {
+				newLinkWeight = v.MinWeight
+			}
+			lastLink = paths[i].Links[j]
+			weight += newLinkWeight
+			paths[i].Weights = append(paths[i].Weights, newLinkWeight)
+		}
+		paths[i].Estimate = weight
+	}
+	return paths
+}
+
+func (v *Vehicle) Run(path Path) time.Duration {
+	now := time.Now()
+	var i int
+	for i = 0; i < len(path.Links); i++ {
+		v.InCity.getNode(path.Links[i].DestinyID).Sem.Status <- SemRequest{Status: true, Allow: path.Links[i].Name}
+		time.Sleep(time.Duration(path.Weights[i]) * time.Second)
+		v.InCity.getNode(path.Links[i].DestinyID).Sem.Status <- SemRequest{Status: false, Allow: path.Links[i].Name}
+		v.Position = v.InCity.getNode(path.Links[i].DestinyID)
+		fmt.Printf("Position: %+v\n", v.Position)
+	}
+	return time.Since(now)
 }

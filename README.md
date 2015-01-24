@@ -12,7 +12,7 @@ simulando interacciones con los semaforos de la ciudad para despejar los caminos
 Edrans Smart City design patterns:
 
 Componentes:
-    - algoritmo shortest path variable
+    - algoritmo shortest path variable *
     - interfaz rest
     - inicializacion de grafos random
     - cliente mobile (quizas)

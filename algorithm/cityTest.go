@@ -25,6 +25,10 @@ func GetTestCity() City {
 	city[15] = Node{ID: 15, Outputs: []Link{Link{Name: "Urquiza", OriginID: 15, DestinyID: 14, Weight: 30}}}
 	city[16] = Node{ID: 16, Outputs: []Link{Link{Name: "Justo", OriginID: 16, DestinyID: 12, Weight: 30}, Link{Name: "Urquiza", OriginID: 16, DestinyID: 15, Weight: 30}}}
 	myCity := City{Nodes: city, Name: "Fake Buenos Aires"}
+	myCity.addService("hospital", 10, 5, 10)
+	myCity.addService("firehouse", 11, 5, 15)
+	myCity.addService("policeman", 16, 5, 5)
+	myCity.launchVehicles()
 	myCity.GenerateSem()
 	myCity.EnableSem()
 	return myCity

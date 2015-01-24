@@ -74,9 +74,9 @@ func (c *City) addService(service string, location, vehicles, minWeight int) {
 	newservice.Location = location
 	newservice.Errors = make(chan error, 5)
 	for i := 0; i < vehicles; i++ {
-		newservice.Vehicles = append(newservice.Vehicles, Vehicle{Service: service, MinWeight: minWeight, Errors: newservice.Errors, InCity: c, BasePosition: c.getNode(location)})
+		newservice.Vehicles = append(newservice.Vehicles, Vehicle{Service: service, MinWeight: minWeight, Errors: newservice.Errors, InCity: c, BasePosition: c.getNode(location), Position: c.getNode(location), Alert: make(chan Path, 5)})
 	}
-	c.Services = append(c.Services, PublicService{})
+	c.Services = append(c.Services, newservice)
 }
 
 func (v *Vehicle) patrol(start int) {
@@ -87,6 +87,7 @@ func (v *Vehicle) patrol(start int) {
 			node := v.InCity.getNode(start)
 			if len(node.Outputs) == 0 {
 				v.Errors <- fmt.Errorf("can not go on patrol")
+				return
 			}
 			v.Position = node
 			patrol = time.After(time.Duration(node.Outputs[0].Weight) * time.Second)
@@ -102,6 +103,7 @@ func (v *Vehicle) patrol(start int) {
 func (v *Vehicle) wait() {
 	for {
 		path := <-v.Alert
+		fmt.Println("models:106")
 		v.run(path)
 		v.Position = v.BasePosition
 	}
@@ -114,6 +116,7 @@ func (c *City) launchVehicles() {
 				go c.Services[i].Vehicles[j].wait()
 			}
 		} else {
+			go c.Services[i].readErrors(c)
 			for j := 0; j < len(c.Services[i].Vehicles); j++ {
 				go c.Services[i].Vehicles[j].patrol(rand.Int() % len(c.Nodes))
 			}
@@ -157,6 +160,7 @@ func (c *City) callService(service, name string) (*Vehicle, error) {
 }
 
 func (v *Vehicle) run(path Path) time.Duration {
+	fmt.Println("running")
 	v.Busy = true
 	now := time.Now()
 	var i int

@@ -12,7 +12,7 @@ func main() {
 
 	var i int
 	city, _ := factory.CreateRectangularCity(3, 3, "Fake Buenos Aires")
-	vehicle, e := city.CallService("doctor")
+	vehicle, e := city.CallService("Medic")
 	if e != nil {
 		fmt.Println(e)
 		os.Exit(2)

@@ -7,8 +7,18 @@ import (
 	"strconv"
 )
 
+const (
+	MIN_WEIGHT_AMBULANCE         = 10
+	MIN_WEIGHT_FIREFIGHT_VEHICLE = 15
+	MIN_WEIGHT_POLICE_CARS       = 5
+	MAX_POLICE_CARS              = 5
+	MAX_FIREFIGHT_VEHICLES       = 5
+	MAX_AMBULANCES               = 5
+)
+
 func CreateRectangularCity(m int, n int, name string) (myCity *models.City, err error) {
-	var city = make([]models.Node, m*n)
+	numNodes := m * n
+	var city = make([]models.Node, numNodes)
 
 	// ID are 1-based and arrays are 0-based
 	currID := 1
@@ -41,6 +51,10 @@ func CreateRectangularCity(m int, n int, name string) (myCity *models.City, err 
 
 	myCity = models.NewCity(city, name)
 
+	myCity.AddService("Hospital", rand.Intn(numNodes)+1, rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_AMBULANCE)
+	myCity.AddService("FireDept", rand.Intn(numNodes)+1, rand.Intn(MAX_FIREFIGHT_VEHICLES)+1, MIN_WEIGHT_FIREFIGHT_VEHICLE)
+	myCity.AddService("PoliceDept", rand.Intn(numNodes)+1, rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_POLICE_CARS)
+	myCity.LaunchVehicles()
 	return
 }
 
@@ -126,9 +140,11 @@ func SampleCity() *models.City {
 	city[15] = models.Node{ID: 15, Outputs: []models.Link{models.Link{Name: "Urquiza", OriginID: 15, DestinyID: 14, Weight: 30}}}
 	city[16] = models.Node{ID: 16, Outputs: []models.Link{models.Link{Name: "Justo", OriginID: 16, DestinyID: 12, Weight: 30}, models.Link{Name: "Urquiza", OriginID: 16, DestinyID: 15, Weight: 30}}}
 	myCity := models.NewCity(city, "Fake Buenos Aires")
-	myCity.AddService("hospital", 10, 5, 10)
-	myCity.AddService("firehouse", 11, 5, 15)
-	myCity.AddService("policeman", 16, 5, 5)
+
+	myCity.AddService("Hospital", 10, 5, 10)
+	myCity.AddService("FireDept", 11, 5, 15)
+	myCity.AddService("PoliceDept", 16, 5, 5)
+
 	myCity.LaunchVehicles()
 	return myCity
 }

@@ -45,6 +45,7 @@ func main() {
 	muxRouter.Handle("/sample-city", handler(getSampleCity)).Methods("GET")
 	muxRouter.Handle("/emergency/{cityID}", handler(postEmergency)).Methods("POST")
 	muxRouter.Handle("/city/{cityID}", handler(getIndex)).Methods("GET")
+	muxRouter.HandleFunc("/", handleFile("main.html"))
 	muxRouter.HandleFunc("/city/img/0.jpg", handleFile("img/0.jpg"))
 	muxRouter.HandleFunc("/city/img/1.jpg", handleFile("img/1.jpg"))
 	muxRouter.HandleFunc("/city/img/2.jpg", handleFile("img/2.jpg"))
@@ -117,7 +118,7 @@ func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (statu
 	err := json.Unmarshal(ctx.Body, &in)
 	if err != nil {
 		status = 400
-	}
+	}_
 	/*if err != nil {
 		status = http.StatusBadRequest
 		fmt.Printf("error in body %+v\n", string(ctx.Body))

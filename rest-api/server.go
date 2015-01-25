@@ -156,14 +156,12 @@ func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (statu
 }
 
 func getMobileCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
-	/*if ctx.CityID == "" {
+	if ctx.CityID == "" {
 		status = 404
 		response = "City doesn't exist"
 		return
 	}
-	response = *sessions[ctx.CityID]*/
-	fmt.Println("here157")
-	response = "it works"
+	response = *sessions[ctx.CityID]
 	return
 }
 

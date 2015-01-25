@@ -1,11 +1,12 @@
 package models
 
 import (
+	"fmt"
 	"time"
 )
 
 var (
-	defaultInterval = 1 * time.Minute
+	defaultInterval = 5 * time.Second
 )
 
 type Semaphore struct {
@@ -28,15 +29,18 @@ func defaultSemaphore() Semaphore {
 func (sem *Semaphore) Start() {
 	change := time.After(sem.Interval)
 	var current int
-	if len(sem.Inputs) > 0 {
-		sem.ActiveInput = &sem.Inputs[current]
+	if len(sem.Inputs) == 0 {
+		return
 	}
+	sem.ActiveInput = &sem.Inputs[current]
+
 	for {
 		select {
 		case <-change:
 			if !sem.Paused {
 				if len(sem.Inputs) > current+1 {
-					sem.ActiveInput = &sem.Inputs[current+1]
+					current++
+					sem.ActiveInput = &sem.Inputs[current]
 					if len(sem.Inputs) == current+1 {
 						current = -1
 					}

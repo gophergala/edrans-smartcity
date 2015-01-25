@@ -51,11 +51,23 @@ func CreateRectangularCity(m int, n int, name string) (myCity *models.City, err 
 
 	myCity = models.NewCity(city, name)
 
-	myCity.AddService("Hospital", rand.Intn(numNodes)+1, rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_AMBULANCE)
-	myCity.AddService("FireDept", rand.Intn(numNodes)+1, rand.Intn(MAX_FIREFIGHT_VEHICLES)+1, MIN_WEIGHT_FIREFIGHT_VEHICLE)
-	myCity.AddService("PoliceDept", rand.Intn(numNodes)+1, rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_POLICE_CARS)
+	myCity.AddService("Hospital", newPublicServicePosition(myCity, numNodes), rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_AMBULANCE)
+	myCity.AddService("FireDept", newPublicServicePosition(myCity, numNodes), rand.Intn(MAX_FIREFIGHT_VEHICLES)+1, MIN_WEIGHT_FIREFIGHT_VEHICLE)
+	myCity.AddService("PoliceDept", newPublicServicePosition(myCity, numNodes), rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_POLICE_CARS)
 	myCity.LaunchVehicles()
 	return
+}
+
+func newPublicServicePosition(city *models.City, numNodes int) int {
+	var pos int
+	for {
+		pos = rand.Intn(numNodes) + 1
+		node := city.GetNode(pos)
+		if len(node.Outputs) != 0 && len(node.Sem.Inputs) != 0 {
+			break
+		}
+	}
+	return pos
 }
 
 func getNeighbours(i, j, m, n int) (list []int) {

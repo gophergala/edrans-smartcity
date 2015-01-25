@@ -59,9 +59,9 @@ func CreateRectangularCity(height int, width int, name string) (myCity *models.C
 		return nil, err
 	}
 
-	myCity.AddService("Hospital", newPublicServicePosition(myCity, numNodes), rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_AMBULANCE)
-	myCity.AddService("FireDept", newPublicServicePosition(myCity, numNodes), rand.Intn(MAX_FIREFIGHT_VEHICLES)+1, MIN_WEIGHT_FIREFIGHT_VEHICLE)
-	myCity.AddService("PoliceDept", newPublicServicePosition(myCity, numNodes), rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_POLICE_CARS)
+	myCity.AddService(models.SERVICE_HOSPITAL, newPublicServicePosition(myCity, numNodes), rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_AMBULANCE)
+	myCity.AddService(models.SERVICE_FIREFIGHTER, newPublicServicePosition(myCity, numNodes), rand.Intn(MAX_FIREFIGHT_VEHICLES)+1, MIN_WEIGHT_FIREFIGHT_VEHICLE)
+	myCity.AddService(models.SERVICE_POLICE, newPublicServicePosition(myCity, numNodes), rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_POLICE_CARS)
 	myCity.LaunchVehicles()
 	return
 }
@@ -161,9 +161,9 @@ func SampleCity() *models.City {
 	city[15] = models.Node{ID: 16, Outputs: []models.Link{models.Link{Name: "Justo", OriginID: 16, DestinyID: 12, Weight: 30}, models.Link{Name: "Urquiza", OriginID: 16, DestinyID: 15, Weight: 30}}}
 	myCity, _ := models.NewCity(city, "Fake Buenos Aires", 4, 4)
 
-	myCity.AddService("Hospital", 10, 5, 10)
-	myCity.AddService("FireDept", 11, 5, 15)
-	myCity.AddService("PoliceDept", 16, 5, 5)
+	myCity.AddService(models.SERVICE_HOSPITAL, 10, 5, 10)
+	myCity.AddService(models.SERVICE_FIREFIGHTER, 11, 5, 15)
+	myCity.AddService(models.SERVICE_POLICE, 16, 5, 5)
 
 	myCity.LaunchVehicles()
 	return myCity

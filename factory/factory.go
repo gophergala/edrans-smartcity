@@ -5,6 +5,7 @@ import (
 
 	"math/rand"
 	"strconv"
+	"time"
 )
 
 const (
@@ -15,6 +16,10 @@ const (
 	MAX_FIREFIGHT_VEHICLES       = 5
 	MAX_AMBULANCES               = 5
 )
+
+func init() {
+	rand.Seed(time.Now().Unix())
+}
 
 func CreateRectangularCity(m int, n int, name string) (myCity *models.City, err error) {
 	numNodes := m * n

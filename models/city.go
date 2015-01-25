@@ -9,6 +9,7 @@ type City struct {
 	nodes    []Node
 	Services []PublicService
 	Name     string
+	Size     []int // height x width
 
 	// Aux vars
 	LastError error
@@ -19,8 +20,6 @@ type Node struct {
 	Location []int
 	Outputs  []Link
 	Sem      Semaphore
-	//Latitude int
-	//Longitude int
 }
 
 type Link struct {
@@ -39,12 +38,21 @@ type Path struct {
 	ForgetMe         bool
 }
 
-func NewCity(nodeList []Node, name string) (city *City) {
-	myCity := City{nodes: nodeList, Name: name}
+func NewCity(nodeList []Node, name string, height, width int) (city *City, err error) {
+	if height <= 0 || width <= 0 {
+		err = fmt.Errorf("Trying to create an invalid-sized city")
+		return nil, err
+	}
+
+	myCity := City{
+		nodes: nodeList,
+		Name:  name,
+		Size:  []int{height, width},
+	}
 	myCity.generateSem()
 	myCity.enableSem()
 
-	return &myCity
+	return &myCity, nil
 }
 
 func (c *City) GetNumNodes() int {

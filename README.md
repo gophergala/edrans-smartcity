@@ -1,4 +1,23 @@
-Edrans Smart City Overview:
+Edrans Smart City (https://github.com/gophergala/edrans-smartcity) Overview:
+
+Edrans Smart City is a proof of concept where a fantasy city is created and a central hub tracks the position of every emergency vehicle's all the time. As soon as any emergency is detected/called, the needed vehicle (ambulance, police car or fire pumper) is notified with a destiny location and a best path to get to it. 
+
+Since this is a city and we have traffic, the shortest path might not be the fastest one to traverse. Moreover, not every road is neither made from the same material nor it measures the same that other one. For this and eventually even more reasons, each road has an associated weight: a 0-99 number which will be modelling these issues. For this particular proof of concept, these values will be randomized. Therefore, the best path will be calculated with a minimum-weight path algorithm.
+
+Finally, since this is a "real" city, at the end of each block we have semaphores which might eventually make the vehicle to stop affecting this best path. Fortunately, the smart city has control over the semaphore lights in the whole city and clears the vehicle's path. 
+
+Once the vehicles are at the emergency place, ambulances will comeback as soon as posible to hospital and police cars will go on patrol.
+
+The idea of the project is to be able to read POST request for emergencies with a REST API from web and mobile clients. Its supposed to provide a web page where you can see a city map with the current status of their semaphores and emergency vehicles.
+
+Once again, this is a proof of concept: its biggest weakness is that it assumes smart semaphores, something which is not real today. But hold on, Internet of Things (IoT) is reaching everywhere, this might not be so crazy!
+
+This project is developed by:
+- Dal Lago, Agustin (https://github.com/agudallago)
+- Herlein, Christian (https://github.com/ChrisHerlein)
+
+_____________________________________________________________________________________________________________________
+
 
 Edrans Smart City pretende ser un servicio para agilizar las emergencias en una ciudad.
 El servicio que se propone es abrir el camino de los vehiculos de emergencia (ambulancias,

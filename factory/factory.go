@@ -21,15 +21,15 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
-func CreateRectangularCity(m int, n int, name string) (myCity *models.City, err error) {
-	numNodes := m * n
+func CreateRectangularCity(height int, width int, name string) (myCity *models.City, err error) {
+	numNodes := height * width
 	var city = make([]models.Node, numNodes)
 
 	// ID are 1-based and arrays are 0-based
 	currID := 1
-	for i := 0; i < m; i++ {
-		for j := 0; j < n; j++ {
-			neighbourList := getNeighbours(i, j, m, n)
+	for i := 0; i < height; i++ {
+		for j := 0; j < width; j++ {
+			neighbourList := getNeighbours(i, j, height, width)
 
 			linkList := make([]models.Link, 0)
 			for k := 0; k < len(neighbourList); k++ {
@@ -54,7 +54,10 @@ func CreateRectangularCity(m int, n int, name string) (myCity *models.City, err 
 		}
 	}
 
-	myCity = models.NewCity(city, name)
+	myCity, err = models.NewCity(city, name, height, width)
+	if err != nil {
+		return nil, err
+	}
 
 	myCity.AddService("Hospital", newPublicServicePosition(myCity, numNodes), rand.Intn(MAX_POLICE_CARS)+1, MIN_WEIGHT_AMBULANCE)
 	myCity.AddService("FireDept", newPublicServicePosition(myCity, numNodes), rand.Intn(MAX_FIREFIGHT_VEHICLES)+1, MIN_WEIGHT_FIREFIGHT_VEHICLE)
@@ -140,23 +143,23 @@ func getRandomWeight() int {
 func SampleCity() *models.City {
 	var city = make([]models.Node, 16)
 
-	city[1] = models.Node{ID: 1, Outputs: []models.Link{models.Link{Name: "Roca", OriginID: 1, DestinyID: 2, Weight: 30}, models.Link{Name: "Pellegrini", OriginID: 1, DestinyID: 5, Weight: 30}}}
-	city[2] = models.Node{ID: 2, Outputs: []models.Link{models.Link{Name: "Roca", OriginID: 2, DestinyID: 3, Weight: 30}}}
-	city[3] = models.Node{ID: 3, Outputs: []models.Link{models.Link{Name: "Roca", OriginID: 3, DestinyID: 4, Weight: 30}, models.Link{Name: "Irigoyen", OriginID: 3, DestinyID: 7, Weight: 35}}}
-	city[4] = models.Node{ID: 4, Outputs: []models.Link{}}
-	city[5] = models.Node{ID: 5, Outputs: []models.Link{models.Link{Name: "Pellegrini", OriginID: 5, DestinyID: 9, Weight: 30}}}
-	city[6] = models.Node{ID: 6, Outputs: []models.Link{models.Link{Name: "Rivadavia", OriginID: 6, DestinyID: 5, Weight: 35}, models.Link{Name: "Irigoyen", OriginID: 6, DestinyID: 2, Weight: 35}}}
-	city[7] = models.Node{ID: 7, Outputs: []models.Link{models.Link{Name: "Rivadavia", OriginID: 7, DestinyID: 6, Weight: 45}, models.Link{Name: "Palacios", OriginID: 7, DestinyID: 11, Weight: 45}}}
-	city[8] = models.Node{ID: 8, Outputs: []models.Link{models.Link{Name: "Rivadavia", OriginID: 8, DestinyID: 7, Weight: 35}, models.Link{Name: "Justo", OriginID: 8, DestinyID: 12, Weight: 30}}}
-	city[9] = models.Node{ID: 9, Outputs: []models.Link{models.Link{Name: "Mitre", OriginID: 9, DestinyID: 10, Weight: 35}, models.Link{Name: "Pellegrini", OriginID: 9, DestinyID: 13, Weight: 30}}}
-	city[10] = models.Node{ID: 10, Outputs: []models.Link{models.Link{Name: "Irigoyen", OriginID: 10, DestinyID: 6, Weight: 45}, models.Link{Name: "Mitre", OriginID: 10, DestinyID: 11, Weight: 45}}}
-	city[11] = models.Node{ID: 11, Outputs: []models.Link{models.Link{Name: "Palacios", OriginID: 11, DestinyID: 15, Weight: 35}, models.Link{Name: "Mitre", OriginID: 11, DestinyID: 12, Weight: 35}}}
-	city[12] = models.Node{ID: 12, Outputs: []models.Link{models.Link{Name: "Justo", OriginID: 12, DestinyID: 8, Weight: 30}}}
-	city[13] = models.Node{ID: 13, Outputs: []models.Link{}}
-	city[14] = models.Node{ID: 14, Outputs: []models.Link{models.Link{Name: "Irigoyen", OriginID: 14, DestinyID: 10, Weight: 35}, models.Link{Name: "Urquiza", OriginID: 14, DestinyID: 13, Weight: 30}}}
-	city[15] = models.Node{ID: 15, Outputs: []models.Link{models.Link{Name: "Urquiza", OriginID: 15, DestinyID: 14, Weight: 30}}}
-	city[16] = models.Node{ID: 16, Outputs: []models.Link{models.Link{Name: "Justo", OriginID: 16, DestinyID: 12, Weight: 30}, models.Link{Name: "Urquiza", OriginID: 16, DestinyID: 15, Weight: 30}}}
-	myCity := models.NewCity(city, "Fake Buenos Aires")
+	city[0] = models.Node{ID: 1, Outputs: []models.Link{models.Link{Name: "Roca", OriginID: 1, DestinyID: 2, Weight: 30}, models.Link{Name: "Pellegrini", OriginID: 1, DestinyID: 5, Weight: 30}}}
+	city[1] = models.Node{ID: 2, Outputs: []models.Link{models.Link{Name: "Roca", OriginID: 2, DestinyID: 3, Weight: 30}}}
+	city[2] = models.Node{ID: 3, Outputs: []models.Link{models.Link{Name: "Roca", OriginID: 3, DestinyID: 4, Weight: 30}, models.Link{Name: "Irigoyen", OriginID: 3, DestinyID: 7, Weight: 35}}}
+	city[3] = models.Node{ID: 4, Outputs: []models.Link{}}
+	city[4] = models.Node{ID: 5, Outputs: []models.Link{models.Link{Name: "Pellegrini", OriginID: 5, DestinyID: 9, Weight: 30}}}
+	city[5] = models.Node{ID: 6, Outputs: []models.Link{models.Link{Name: "Rivadavia", OriginID: 6, DestinyID: 5, Weight: 35}, models.Link{Name: "Irigoyen", OriginID: 6, DestinyID: 2, Weight: 35}}}
+	city[6] = models.Node{ID: 7, Outputs: []models.Link{models.Link{Name: "Rivadavia", OriginID: 7, DestinyID: 6, Weight: 45}, models.Link{Name: "Palacios", OriginID: 7, DestinyID: 11, Weight: 45}}}
+	city[7] = models.Node{ID: 8, Outputs: []models.Link{models.Link{Name: "Rivadavia", OriginID: 8, DestinyID: 7, Weight: 35}, models.Link{Name: "Justo", OriginID: 8, DestinyID: 12, Weight: 30}}}
+	city[8] = models.Node{ID: 9, Outputs: []models.Link{models.Link{Name: "Mitre", OriginID: 9, DestinyID: 10, Weight: 35}, models.Link{Name: "Pellegrini", OriginID: 9, DestinyID: 13, Weight: 30}}}
+	city[9] = models.Node{ID: 10, Outputs: []models.Link{models.Link{Name: "Irigoyen", OriginID: 10, DestinyID: 6, Weight: 45}, models.Link{Name: "Mitre", OriginID: 10, DestinyID: 11, Weight: 45}}}
+	city[10] = models.Node{ID: 11, Outputs: []models.Link{models.Link{Name: "Palacios", OriginID: 11, DestinyID: 15, Weight: 35}, models.Link{Name: "Mitre", OriginID: 11, DestinyID: 12, Weight: 35}}}
+	city[11] = models.Node{ID: 12, Outputs: []models.Link{models.Link{Name: "Justo", OriginID: 12, DestinyID: 8, Weight: 30}}}
+	city[12] = models.Node{ID: 13, Outputs: []models.Link{}}
+	city[13] = models.Node{ID: 14, Outputs: []models.Link{models.Link{Name: "Irigoyen", OriginID: 14, DestinyID: 10, Weight: 35}, models.Link{Name: "Urquiza", OriginID: 14, DestinyID: 13, Weight: 30}}}
+	city[14] = models.Node{ID: 15, Outputs: []models.Link{models.Link{Name: "Urquiza", OriginID: 15, DestinyID: 14, Weight: 30}}}
+	city[15] = models.Node{ID: 16, Outputs: []models.Link{models.Link{Name: "Justo", OriginID: 16, DestinyID: 12, Weight: 30}, models.Link{Name: "Urquiza", OriginID: 16, DestinyID: 15, Weight: 30}}}
+	myCity, _ := models.NewCity(city, "Fake Buenos Aires", 4, 4)
 
 	myCity.AddService("Hospital", 10, 5, 10)
 	myCity.AddService("FireDept", 11, 5, 15)

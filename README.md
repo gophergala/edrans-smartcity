@@ -16,6 +16,17 @@ This project is developed by:
 - Dal Lago, Agustin (https://github.com/agudallago)
 - Herlein, Christian (https://github.com/ChrisHerlein)
 
+
+HOW TO USE:
+
+Here is how to start using this prototype web-client.
+
+1) Run server.go to start server. By default this will start listening in port 2489. If you want to listen in another port just run it with "--port=<new>" where <new> is the new port to listen. This
+
+
+pOST /city para crear ciudad, que te diercciona al mapa
+post /emergency para generar emergencias
+
 _____________________________________________________________________________________________________________________
 
 

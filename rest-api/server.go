@@ -31,16 +31,11 @@ type context struct {
 
 func main() {
 	var port int
-	var err error
 	flag.IntVar(&port, "port", 2489, "port server will be launched")
 	flag.Parse()
 
 	sessions = make(map[string]*models.City)
-	sessions["default"], err = factory.CreateRectangularCity(10, 10, "default")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(2)
-	}
+	sessions["default"], _ = factory.CreateRectangularCity(10, 10, "default")
 
 	muxRouter := mux.NewRouter()
 	muxRouter.StrictSlash(false)
@@ -107,6 +102,12 @@ type cityParams struct {
 	Name           string `json:"name"`
 }
 
+type cityParams2 struct {
+	SizeHorizontal string `json:"size-horizontal"`
+	SizeVertical   string `json:"size-vertical"`
+	Name           string `json:"name"`
+}
+
 func getSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
 	var sample = cityParams{SizeHorizontal: 10, SizeVertical: 10, Name: fmt.Sprintf("Sample-city-%d", len(sessions))}
 	ctx.Body, _ = json.Marshal(sample)
@@ -121,9 +122,22 @@ func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (statu
 	status = 302
 	var url string
 	err := json.Unmarshal(ctx.Body, &in)
-	if err != nil {
+
+	//this hack is for our dummy ui
+	if err != nil || (in.SizeHorizontal == 0 && in.SizeVertical == 0) {
+		var in2 cityParams2
+		json.Unmarshal(ctx.Body, &in2)
+		in.SizeHorizontal, _ = strconv.Atoi(in2.SizeHorizontal)
+		in.SizeVertical, _ = strconv.Atoi(in2.SizeVertical)
+		in.Name = in2.Name
+	}
+
+	if in.Name == "" {
 		status = 400
-	}_
+		response = "Bad json"
+		return
+	}
+
 	/*if err != nil {
 		status = http.StatusBadRequest
 		fmt.Printf("error in body %+v\n", string(ctx.Body))
@@ -240,7 +254,7 @@ func getIndex(w http.ResponseWriter, r *http.Request, ctx *context) (status int,
 		if strings.Contains(fileLines[i], "<table") {
 			if sessions[ctx.CityID] == nil {
 				status = 404
-				response = "city does not exist"
+				response = "ciity does not exist"
 				return
 			}
 			table := createTable(ctx.CityID)

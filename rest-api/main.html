@@ -18,12 +18,12 @@
 	<label for="cityName">City Name</label>
 	<input id="cityName" name="default" value="default">
 	<br>
-	<label for="Where">Where to go</label>
-	<input id="where" name="where" value=5>
+	<label for="sizehorizontal">Size Horizontal</label>
+	<input id="sizehorizontal" name="sizehorizontal" value=5>
 	<br>
-	<label for="service">Service</label>
-	<input id="service" name="service" value="Medic">
-	<input type="submit" value="Send Me!">
+	<label for="sizevertical">Size Vertical</label>
+	<input id="sizevertical" name="sizevertical" value=5>
+	<input type="submit" value="Request Me!">
 	</form>
 
 	<script> 
@@ -34,13 +34,13 @@
     			// We bind the FormData object and the form element
     			var FD  = new FormData(form);
 
-			var item = {"where": form.where.value, "service": form.service.value}
+			var item = {"size-vertical": form.sizevertical.value, "size-horizontal": form.sizehorizontal.value, "name":form.cityName.value}
 			var jsonString = JSON.stringify(item);
 
    			// We define what will happen if the data are successfully sent
-    			XHR.addEventListener("load", function(event) {
-      				alert(event.target.responseText);
-    			});
+    			//XHR.addEventListener("load", function(event) {
+      			//	alert(event.target.responseText);
+    			//});
 
     			// We define what will happen in case of error
     			XHR.addEventListener("error", function(event) {
@@ -48,7 +48,7 @@
     			});
 
     			// We setup our request
-    			XHR.open("POST", from.url.value+"/emergency/"+form.cityName.value);
+    			XHR.open("POST", from.url.value+"/sample-city");
 
     			// The data sent are the one the user provide in the form
     			XHR.send(jsonString);

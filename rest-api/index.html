@@ -6,14 +6,18 @@
 </head>
 
 <body topmargin="0" leftmargin="0" rightmargin="0" bottommargin="0" marginheight="0" marginwidth="0" bgcolor="#FFFFFF">
-    <table border="1" style="background-color:#FFFFCC;border-collapse:collapse;border:1px solid #FFCC00;color:#000000;width:100%" cellpadding="3" cellspacing="3">
-    </table>
-
+	<table border="1" style="background-color:#FFFFCC;border-collapse:collapse;border:1px solid #FFCC00;color:#000000;width:100%" cellpadding="3" cellspacing="3">
+	</table>
+	
 	<br>
+	Red is for Hospital/Ambulances <br>
+	Blue is for Policemen/Patrolman <br>
+	Green is for Fire Station/Pumpers <br>
+	<br> <hr> <br>
+	POST AN EMERGENCY <br> <br>
 	<form id="myForm" name="myForm" method="POST">
-	<br>
-	<label for="url">Endpoint URL</label>
-	<input id="url" name="url" value="http://localhost:2489">
+	<label for="endpoint">Endpoint url</label>
+	<input id="endpoint" name="endpoint" value="http://10.211.55.134:2489">
 	<br>
 	<label for="cityName">City Name</label>
 	<input id="cityName" name="default" value="default">
@@ -26,46 +30,42 @@
 	<input type="submit" value="Send Me!">
 	</form>
 
-	<script> 
-	window.addEventListener("load", function () {
-  		function sendData() {
-    			var XHR = new XMLHttpRequest();
+	<script>
+		window.addEventListener("load", function () {
+			function sendData() {
+				var XHR = new XMLHttpRequest();
+				// We bind the FormData object and the form element
+				var FD = new FormData(form);
+				var item = {"where": form.where.value, "service": form.service.value}
+				var jsonString = JSON.stringify(item);
 
-    			// We bind the FormData object and the form element
-    			var FD  = new FormData(form);
+				// We define what will happen if the data are successfully sent
+				XHR.addEventListener("load", function(event) {
+					alert(event.target.responseText);
+				});
 
-			var item = {"where": form.where.value, "service": form.service.value}
-			var jsonString = JSON.stringify(item);
+				// We define what will happen in case of error
+				XHR.addEventListener("error", function(event) {
+					alert('Oups! Something goes wrong.');
+				});
 
-   			// We define what will happen if the data are successfully sent
-    			XHR.addEventListener("load", function(event) {
-      				alert(event.target.responseText);
-    			});
+				// We setup our request
+				XHR.open("POST", form.endpoint.value+"/emergency/"+form.cityName.value);
+				//XHR.open("POST", "http://localhost:2489"+"/emergency/"+form.cityName.value);
+				//XHR.open("POST", form.endpoint.value);
+				// The data sent are the one the user provide in the form
+				XHR.send(jsonString);
+			}
 
-    			// We define what will happen in case of error
-    			XHR.addEventListener("error", function(event) {
-      				alert('Oups! Something goes wrong.');
-    			});
-
-    			// We setup our request
-    			XHR.open("POST", form.url.value+"/emergency/"+form.cityName.value);
-
-    			// The data sent are the one the user provide in the form
-    			XHR.send(jsonString);
-  		}
- 
-  		// We need to access the form element
-  		var form = document.getElementById("myForm");
-
-  		// to takeover its submit event.
-  		form.addEventListener("submit", function (event) {
-    			event.preventDefault();
-    			sendData();
-  		});
-	});
-
+			// We need to access the form element
+			var form = document.getElementById("myForm");
+			
+			// to takeover its submit event.
+			form.addEventListener("submit", function (event) {
+				event.preventDefault();
+				sendData();
+			});
+		});
 	</script>
-
 </body>
-
 </html>

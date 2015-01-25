@@ -79,6 +79,8 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx.CityID, _ = vars["cityID"]
 
 	status, response := h(w, r, &ctx)
+	fmt.Println("status:", status)
+	fmt.Println("response:", response)
 	if status == -1 {
 		return
 	}
@@ -115,24 +117,11 @@ func getSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (status
 }
 
 func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
-	type cityOut struct {
-		CityName string `json:"city-name"`
-	}
 	var in cityParams
 	status = 302
 	var url string
 	err := json.Unmarshal(ctx.Body, &in)
-
-	//this hack is for our dummy ui
-	if err != nil || (in.SizeHorizontal == 0 && in.SizeVertical == 0) {
-		var in2 cityParams2
-		json.Unmarshal(ctx.Body, &in2)
-		in.SizeHorizontal, _ = strconv.Atoi(in2.SizeHorizontal)
-		in.SizeVertical, _ = strconv.Atoi(in2.SizeVertical)
-		in.Name = in2.Name
-	}
-
-	if in.Name == "" {
+	if in.Name == "" || err != nil {
 		status = 400
 		response = "Bad json"
 		return
@@ -166,9 +155,8 @@ func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (statu
 	} else {
 		url = fmt.Sprintf("/city/%s", in.Name)
 	}
-	return 200, url
-	//http.Redirect(w, r, url, status)
-	//return -1, nil
+	http.Redirect(w, r, url, status)
+	return -1, nil
 }
 
 func getMobileCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
@@ -189,7 +177,6 @@ type emergencyRequest struct {
 
 func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
 	var emergency emergencyRequest
-	fmt.Println(string(ctx.Body))
 	e := json.Unmarshal(ctx.Body, &emergency)
 	if e != nil {
 		status = 400
@@ -210,6 +197,7 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 		response = "city not found"
 		return
 	}
+
 	defer city.CleanError()
 	vehicle, e := city.CallService(emergency.Service)
 	if e != nil {
@@ -217,26 +205,31 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 		response = e.Error()
 		return
 	}
+
 	paths, e := algorithm.GetPaths(city, vehicle.Position.ID, emergency.Where)
 	if e != nil {
 		status = 400
 		response = e.Error()
 		return
 	}
+
 	paths = algorithm.CalcEstimatesForVehicle(vehicle, paths)
 	if len(paths) == 0 {
 		status = 400
 		response = "Oh no... there is no way to go"
 		return
 	}
+
 	toRun1 := algorithm.SortCandidates(paths)[0]
 	paths, _ = algorithm.GetPaths(city, emergency.Where, vehicle.BasePosition.ID)
 	paths = algorithm.CalcEstimatesForVehicle(vehicle, paths)
+
 	if len(paths) == 0 {
 		status = 400
 		response = "Oh no... there is no way to come back"
 		return
 	}
+
 	vehicle.Alert <- toRun1
 	vehicle.Alert <- algorithm.SortCandidates(paths)[0]
 	response = fmt.Sprintf("%s on the way to %d. It is %d blocks away", emergency.Service, emergency.Where, len(toRun1.Links))

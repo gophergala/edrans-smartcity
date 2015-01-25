@@ -41,8 +41,8 @@ func main() {
 	muxRouter.StrictSlash(false)
 
 	muxRouter.Handle("/mobile/city/{cityID}", handler(getMobileCity)).Methods("POST")
-	//muxRouter.Handle("/sample-city", handler(postSampleCity)).Methods("POST")
 	muxRouter.Handle("/sample-city", handler(postSampleCity)).Methods("POST")
+	muxRouter.Handle("/sample-city", handler(getSampleCity)).Methods("GET")
 	muxRouter.Handle("/emergency/{cityID}", handler(postEmergency)).Methods("POST")
 	muxRouter.Handle("/city/{cityID}", handler(getIndex)).Methods("GET")
 	muxRouter.HandleFunc("/city/img/0.jpg", handleFile("img/0.jpg"))
@@ -75,7 +75,6 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	ctx.CityID, _ = vars["cityID"]
 
-	fmt.Println("handler")
 	status, response := h(w, r, &ctx)
 	if status == -1 {
 		return
@@ -94,16 +93,22 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write(responseJSON)
 }
 
+type cityParams struct {
+	SizeHorizontal int    `json:"size-horizontal"`
+	SizeVertical   int    `json:"size-vertical"`
+	Name           string `json:"name"`
+}
+
+func getSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
+	var sample = cityParams{SizeHorizontal: 10, SizeVertical: 10, Name: fmt.Sprintf("Sample-city-%d", len(sessions))}
+	ctx.Body, _ = json.Marshal(sample)
+	return postSampleCity(w, r, ctx)
+}
+
 func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
-	type cityParams struct {
-		SizeHorizontal int    `json:"size-horizontal"`
-		SizeVertical   int    `json:"size-vertical"`
-		Name           string `json:"name"`
-	}
 	type cityOut struct {
 		CityName string `json:"city-name"`
 	}
-	fmt.Println("here")
 	var in cityParams
 	status = 302
 	var url string
@@ -139,7 +144,6 @@ func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (statu
 	} else {
 		url = fmt.Sprintf("/city/%s", in.Name)
 	}
-	fmt.Println("here2")
 	http.Redirect(w, r, url, status)
 	return -1, nil
 }
@@ -150,9 +154,7 @@ func getMobileCity(w http.ResponseWriter, r *http.Request, ctx *context) (status
 		response = "City doesn't exist"
 		return
 	}
-
 	response = *sessions[ctx.CityID]
-
 	return
 }
 
@@ -189,13 +191,11 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 	}
 	paths = algorithm.CalcEstimatesForVehicle(vehicle, paths)
 	toRun := algorithm.SortCandidates(paths)[0]
-	fmt.Println("190")
 	vehicle.Alert <- toRun
 	paths, _ = algorithm.GetPaths(city, emergency.Where, vehicle.BasePosition.ID)
 	paths = algorithm.CalcEstimatesForVehicle(vehicle, paths)
 	vehicle.Alert <- algorithm.SortCandidates(paths)[0]
 	response = fmt.Sprintf("%s on the way to %d. It is %d blocks away", emergency.Service, emergency.Where, len(toRun.Links))
-	fmt.Println("respondiendo")
 	return
 }
 

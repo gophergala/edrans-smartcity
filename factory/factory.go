@@ -42,7 +42,7 @@ func CreateRectangularCity(m int, n int, name string) (myCity *models.City, err 
 
 			city[currID-1] = models.Node{
 				ID:       currID,
-				Location: []int{i, j},
+				Location: []int{j, -i},
 				Outputs:  linkList,
 			}
 			currID++

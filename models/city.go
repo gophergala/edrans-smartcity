@@ -87,7 +87,7 @@ func (c *City) AddService(service string, location, vehicles, minWeight int) {
 
 func (c *City) LaunchVehicles() {
 	for i := 0; i < len(c.Services); i++ {
-		if c.Services[i].Service == "Hospital" || c.Services[i].Service == "FireDept" {
+		if c.Services[i].Service == SERVICE_HOSPITAL || c.Services[i].Service == SERVICE_FIREFIGHTER {
 			for j := 0; j < len(c.Services[i].Vehicles); j++ {
 				go c.Services[i].Vehicles[j].wait()
 			}
@@ -102,12 +102,12 @@ func (c *City) LaunchVehicles() {
 
 func (c *City) CallService(call string) (*Vehicle, error) {
 	switch call {
-	case "Medic":
-		return c.callService("Hospital", "ambulance")
-	case "Fireman":
-		return c.callService("FireDept", "pumper")
-	case "Police":
-		return c.callService("PoliceDept", "patrolman")
+	case CALL_SERVICE_MEDIC:
+		return c.callService(SERVICE_HOSPITAL, VEHICLE_AMBULANCE)
+	case CALL_SERVICE_FIREMAN:
+		return c.callService(SERVICE_FIREFIGHTER, VEHICLE_PUMPER)
+	case CALL_SERVICE_POLICE:
+		return c.callService(SERVICE_POLICE, VEHICLE_POLICE_CAR)
 	}
 	return nil, fmt.Errorf("unknown service")
 }
@@ -226,11 +226,11 @@ func (c *City) getVehicle(node int) int {
 			if c.Services[i].Vehicles[j].Position.ID == node {
 				var vehicleType int
 				switch c.Services[i].Vehicles[j].Service {
-				case "Hospital":
+				case SERVICE_HOSPITAL:
 					vehicleType = 1
-				case "FireDept":
+				case SERVICE_FIREFIGHTER:
 					vehicleType = 2
-				case "PoliceDept":
+				case SERVICE_POLICE:
 					vehicleType = 0
 				}
 				return vehicleType

@@ -57,9 +57,9 @@ func (v *Vehicle) wait() {
 		v.run(path)
 		path = <-v.Alert
 		switch v.Service {
-		case "Hospital":
+		case SERVICE_HOSPITAL:
 			v.run(path)
-		case "FireDept":
+		case SERVICE_FIREFIGHTER:
 			v.back(path)
 		}
 	}

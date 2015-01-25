@@ -74,7 +74,7 @@ func (c *City) AddService(service string, location, vehicles, minWeight int) {
 
 func (c *City) LaunchVehicles() {
 	for i := 0; i < len(c.Services); i++ {
-		if c.Services[i].Service == "hospital" || c.Services[i].Service == "firehouse" {
+		if c.Services[i].Service == "Hospital" || c.Services[i].Service == "FireDept" {
 			for j := 0; j < len(c.Services[i].Vehicles); j++ {
 				go c.Services[i].Vehicles[j].wait()
 			}
@@ -142,6 +142,7 @@ func (c *City) generateSem() {
 		var sem Semaphore
 		sem.Interval = defaultInterval
 		sem.Inputs = links
+		sem.ActiveInput = &sem.Inputs[0]
 		sem.Status = make(chan SemRequest, 1)
 		c.nodes[i].Sem = sem
 		go sem.Start()
@@ -157,4 +158,61 @@ func (c *City) GetNode(ID int) *Node {
 		return nil
 	}
 	return &c.nodes[ID-1]
+}
+
+type Location struct {
+	Lat     int
+	Long    int
+	Vehicle int //-1: none, 0: police, 1: ambulance, 2:pumper
+	Input   int //0: north, 1: south, 2: east, 3: west
+}
+
+func (c *City) GetLocations() []Location {
+	var locations = make([]Location, len(c.nodes))
+	for i := 0; i < len(locations); i++ {
+		locations[i].Lat = c.nodes[i].Location[1]
+		locations[i].Long = c.nodes[i].Location[0]
+		locations[i].Vehicle = c.getVehicle(c.nodes[i].ID)
+		if len(c.nodes[i].Sem.Inputs) == 0 {
+			locations[i].Input = -1
+			continue
+		}
+		input := c.GetNode(c.nodes[i].Sem.ActiveInput.OriginID)
+		if input == nil {
+			fmt.Printf("Error")
+			return nil
+		}
+		inputNode := input.Location
+		switch {
+		case inputNode[0] > locations[i].Long:
+			locations[i].Input = 0
+		case inputNode[0] < locations[i].Long:
+			locations[i].Input = 1
+		case inputNode[1] > locations[i].Lat:
+			locations[i].Input = 2
+		case inputNode[1] < locations[i].Lat:
+			locations[i].Input = 3
+		}
+	}
+	return locations
+}
+
+func (c *City) getVehicle(node int) int {
+	for i := 0; i < len(c.Services); i++ {
+		for j := 0; j < len(c.Services[i].Vehicles); j++ {
+			if c.Services[i].Vehicles[j].Position.ID == node {
+				var vehicleType int
+				switch c.Services[i].Vehicles[j].Service {
+				case "Hospital":
+					vehicleType = 1
+				case "FireDept":
+					vehicleType = 2
+				case "PoliceDept":
+					vehicleType = 0
+				}
+				return vehicleType
+			}
+		}
+	}
+	return -1
 }

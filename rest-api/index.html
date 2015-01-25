@@ -48,7 +48,7 @@
     			});
 
     			// We setup our request
-    			XHR.open("POST", from.url.value+"/emergency/"+form.cityName.value);
+    			XHR.open("POST", form.url.value+"/emergency/"+form.cityName.value);
 
     			// The data sent are the one the user provide in the form
     			XHR.send(jsonString);

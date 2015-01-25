@@ -166,8 +166,9 @@ func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (statu
 	} else {
 		url = fmt.Sprintf("/city/%s", in.Name)
 	}
-	http.Redirect(w, r, url, status)
-	return -1, nil
+	return 200, url
+	//http.Redirect(w, r, url, status)
+	//return -1, nil
 }
 
 func getMobileCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {

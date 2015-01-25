@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -21,13 +20,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var sessions map[int]*models.City
+var sessions map[string]*models.City
 
 type handler func(w http.ResponseWriter, r *http.Request, ctx *context) (int, interface{})
 
 type context struct {
 	Body   []byte
-	CityID int
+	CityID string
 }
 
 func main() {
@@ -35,16 +34,16 @@ func main() {
 	flag.IntVar(&port, "port", 2489, "port server will be launched")
 	flag.Parse()
 
-	sessions = make(map[int]*models.City)
-	sessions[0], _ = factory.CreateRectangularCity(10, 10, "default")
+	sessions = make(map[string]*models.City)
+	sessions["default"], _ = factory.CreateRectangularCity(10, 10, "default")
 
 	muxRouter := mux.NewRouter()
 	muxRouter.StrictSlash(false)
 
-	muxRouter.Handle("/city", handler(getCity)).Methods("GET")
+	muxRouter.Handle("/mobile/city/{cityID}", handler(getMobileCity)).Methods("POST")
 	//muxRouter.Handle("/sample-city", handler(postSampleCity)).Methods("POST")
 	muxRouter.Handle("/sample-city", handler(postSampleCity)).Methods("POST")
-	muxRouter.Handle("/emergency", handler(postEmergency)).Methods("POST")
+	muxRouter.Handle("/emergency/{cityID}", handler(postEmergency)).Methods("POST")
 	muxRouter.Handle("/city/{cityID}", handler(getIndex)).Methods("GET")
 	muxRouter.HandleFunc("/city/img/0.jpg", handleFile("img/0.jpg"))
 	muxRouter.HandleFunc("/city/img/1.jpg", handleFile("img/1.jpg"))
@@ -74,9 +73,9 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	//ctx.CityID = r.Header.Get("city-name")
 	vars := mux.Vars(r)
-	value, _ := vars["cityID"]
-	ctx.CityID, _ = strconv.Atoi(value)
+	ctx.CityID, _ = vars["cityID"]
 
+	fmt.Println("handler")
 	status, response := h(w, r, &ctx)
 	if status == -1 {
 		return
@@ -104,6 +103,7 @@ func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (statu
 	type cityOut struct {
 		CityName string `json:"city-name"`
 	}
+	fmt.Println("here")
 	var in cityParams
 	status = 302
 	var url string
@@ -118,12 +118,17 @@ func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (statu
 		return
 	}*/
 
-	cityID := len(sessions) + 1
-	sessions[cityID], err = factory.CreateRectangularCity(in.SizeHorizontal, in.SizeVertical, in.Name)
+	if sessions[in.Name] != nil {
+		status = 403
+		response = "city already exists"
+		return
+	}
+
+	sessions[in.Name], err = factory.CreateRectangularCity(in.SizeHorizontal, in.SizeVertical, in.Name)
 	if err != nil {
 		status = 400
-		//response = fmt.Sprintf("Error: %s", err)
-		//return
+		response = err.Error()
+		return
 	}
 
 	/*response = cityOut{
@@ -132,31 +137,28 @@ func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (statu
 	if status != 302 {
 		url = "/error"
 	} else {
-		url = fmt.Sprintf("/%d", cityID)
+		url = fmt.Sprintf("/city/%s", in.Name)
 	}
+	fmt.Println("here2")
 	http.Redirect(w, r, url, status)
 	return -1, nil
 }
 
-func getCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
-	if ctx.CityID != 0 {
-		status = 403
-		response = "You already have a city"
+func getMobileCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
+	if ctx.CityID == "" {
+		status = 404
+		response = "City doesn't exist"
 		return
 	}
 
-	city := factory.SampleCity() // TODO MUST REPLACE THIS
-	response = city
-	/*if e != nil {
-		status = 400
-		response = e
-	}*/
+	response = *sessions[ctx.CityID]
+
 	return
 }
 
 type emergencyRequest struct {
 	Service string `json:"service"`
-	Where   int    `json:"location"`
+	Where   int    `json:"where"`
 }
 
 func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
@@ -164,7 +166,7 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 	e := json.Unmarshal(ctx.Body, &emergency)
 	if e != nil {
 		status = 400
-		response = e
+		response = e.Error()
 		return
 	}
 	city := sessions[ctx.CityID]
@@ -176,19 +178,24 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 	vehicle, e := city.CallService(emergency.Service)
 	if e != nil {
 		status = 400
-		response = e
+		response = e.Error()
 		return
 	}
 	paths, e := algorithm.GetPaths(city, vehicle.Position.ID, emergency.Where)
 	if e != nil {
 		status = 400
-		response = e
+		response = e.Error()
 		return
 	}
 	paths = algorithm.CalcEstimatesForVehicle(vehicle, paths)
 	toRun := algorithm.SortCandidates(paths)[0]
+	fmt.Println("190")
 	vehicle.Alert <- toRun
+	paths, _ = algorithm.GetPaths(city, emergency.Where, vehicle.BasePosition.ID)
+	paths = algorithm.CalcEstimatesForVehicle(vehicle, paths)
+	vehicle.Alert <- algorithm.SortCandidates(paths)[0]
 	response = fmt.Sprintf("%s on the way to %d. It is %d blocks away", emergency.Service, emergency.Where, len(toRun.Links))
+	fmt.Println("respondiendo")
 	return
 }
 
@@ -219,7 +226,7 @@ func getIndex(w http.ResponseWriter, r *http.Request, ctx *context) (status int,
 	return
 }
 
-func createTable(cityID int) []string {
+func createTable(cityID string) []string {
 	var table = make([]string, 0)
 	city := sessions[cityID]
 	locations := city.GetLocations()

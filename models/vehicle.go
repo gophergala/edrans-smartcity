@@ -32,7 +32,17 @@ func (v *Vehicle) patrol(start int) {
 			}
 			v.Position = node
 			patrol = time.After(time.Duration(node.Outputs[0].Weight) * time.Second)
-			start = node.Outputs[0].DestinyID
+		HasNext:
+			for {
+				for i := 0; i < len(node.Outputs); i++ {
+					next := v.InCity.GetNode(node.Outputs[i].DestinyID)
+					if next.Sem.ActiveInput.Name == node.Outputs[i].Name {
+						start = node.Outputs[i].DestinyID
+						break HasNext
+					}
+				}
+				time.Sleep(5 * time.Second)
+			}
 		case path := <-v.Alert:
 			v.run(path)
 			v.Position = v.InCity.GetNode(path.Links[len(path.Links)-1].DestinyID)
@@ -45,7 +55,12 @@ func (v *Vehicle) wait() {
 	for {
 		path := <-v.Alert
 		v.run(path)
-		v.Position = v.BasePosition
+		switch v.Service {
+		case "Hospital":
+			path = <-v.Alert
+			v.run(path)
+		case "FireDept":
+		}
 	}
 }
 
@@ -57,6 +72,18 @@ func (v *Vehicle) run(path Path) time.Duration {
 		v.InCity.GetNode(path.Links[i].DestinyID).Sem.Status <- SemRequest{Status: true, Allow: path.Links[i].Name}
 		time.Sleep(time.Duration(path.Weights[i]) * time.Second)
 		v.InCity.GetNode(path.Links[i].DestinyID).Sem.Status <- SemRequest{Status: false, Allow: path.Links[i].Name}
+		v.Position = v.InCity.GetNode(path.Links[i].DestinyID)
+	}
+	v.Busy = false
+	return time.Since(now)
+}
+
+func (v *Vehicle) back(path Path) time.Duration {
+	v.Busy = true
+	now := time.Now()
+	var i int
+	for i = 0; i < len(path.Links); i++ {
+		time.Sleep(time.Duration(path.Weights[i]) * time.Second)
 		v.Position = v.InCity.GetNode(path.Links[i].DestinyID)
 	}
 	v.Busy = false

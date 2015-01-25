@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,7 +40,7 @@ func main() {
 	muxRouter := mux.NewRouter()
 	muxRouter.StrictSlash(false)
 
-	muxRouter.Handle("/mobile/city/{cityID}", handler(getMobileCity)).Methods("POST")
+	muxRouter.Handle("/mobile/city/{cityID}", handler(getMobileCity)).Methods("GET")
 	muxRouter.Handle("/sample-city", handler(postSampleCity)).Methods("POST")
 	muxRouter.Handle("/sample-city", handler(getSampleCity)).Methods("GET")
 	muxRouter.Handle("/emergency/{cityID}", handler(postEmergency)).Methods("POST")
@@ -64,6 +65,8 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var ctx context
 	var e error
+
+	//w.Header().Set("Content-Type", "application/json")
 
 	ctx.Body, e = ioutil.ReadAll(r.Body)
 	if e != nil {
@@ -148,28 +151,40 @@ func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (statu
 }
 
 func getMobileCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
-	if ctx.CityID == "" {
+	/*if ctx.CityID == "" {
 		status = 404
 		response = "City doesn't exist"
 		return
 	}
-	response = *sessions[ctx.CityID]
+	response = *sessions[ctx.CityID]*/
+	fmt.Println("here157")
+	response = "it works"
 	return
 }
 
 type emergencyRequest struct {
-	Service string `json:"service"`
-	Where   int    `json:"where"`
+	Service      string `json:"service"`
+	WhereRequest string `json:"where"`
+	Where        int
 }
 
 func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
 	var emergency emergencyRequest
+	fmt.Println(string(ctx.Body))
 	e := json.Unmarshal(ctx.Body, &emergency)
 	if e != nil {
 		status = 400
 		response = e.Error()
 		return
 	}
+
+	emergency.Where, e = strconv.Atoi(emergency.WhereRequest)
+	if e != nil {
+		status = 400
+		response = e.Error()
+		return
+	}
+
 	city := sessions[ctx.CityID]
 	if city == nil {
 		status = 404

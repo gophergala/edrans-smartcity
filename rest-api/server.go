@@ -31,11 +31,16 @@ type context struct {
 
 func main() {
 	var port int
+	var err error
 	flag.IntVar(&port, "port", 2489, "port server will be launched")
 	flag.Parse()
 
 	sessions = make(map[string]*models.City)
-	sessions["default"], _ = factory.CreateRectangularCity(10, 10, "default")
+	sessions["default"], err = factory.CreateRectangularCity(10, 10, "default")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(2)
+	}
 
 	muxRouter := mux.NewRouter()
 	muxRouter.StrictSlash(false)
@@ -248,7 +253,7 @@ func getIndex(w http.ResponseWriter, r *http.Request, ctx *context) (status int,
 		if strings.Contains(fileLines[i], "<table") {
 			if sessions[ctx.CityID] == nil {
 				status = 404
-				response = "ciity does not exist"
+				response = "city does not exist"
 				return
 			}
 			table := createTable(ctx.CityID)

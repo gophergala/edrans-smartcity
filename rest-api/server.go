@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 
 	sessions = make(map[int]*models.City)
-	sessions[0], _ = factory.CreateRectangularCity(3, 3, "default")
+	sessions[0], _ = factory.CreateRectangularCity(12, 12, "default")
 
 	muxRouter := mux.NewRouter()
 	muxRouter.StrictSlash(false)
@@ -168,6 +168,11 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 		return
 	}
 	city := sessions[ctx.CityID]
+	if city == nil {
+		status = 404
+		response = "city not found"
+		return
+	}
 	vehicle, e := city.CallService(emergency.Service)
 	if e != nil {
 		status = 400
@@ -181,8 +186,9 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 		return
 	}
 	paths = algorithm.CalcEstimatesForVehicle(vehicle, paths)
-	vehicle.Alert <- algorithm.SortCandidates(paths)[0]
-	response = fmt.Sprintf("%s on the way to %d", emergency.Service, emergency.Where)
+	toRun := algorithm.SortCandidates(paths)[0]
+	vehicle.Alert <- toRun
+	response = fmt.Sprintf("%s on the way to %d. It is %d blocks away", emergency.Service, emergency.Where, len(toRun.Links))
 	return
 }
 
@@ -196,6 +202,11 @@ func getIndex(w http.ResponseWriter, r *http.Request, ctx *context) (status int,
 	for i := 0; i < len(fileLines); i++ {
 		index = append(index, fileLines[i])
 		if strings.Contains(fileLines[i], "<table") {
+			if sessions[ctx.CityID] == nil {
+				status = 404
+				response = "ciity does not exist"
+				return
+			}
 			table := createTable(ctx.CityID)
 			for j := 0; j < len(table); j++ {
 				index = append(index, table[j])
@@ -215,7 +226,7 @@ func createTable(cityID int) []string {
 	nodesRoot := int(math.Sqrt(float64(len(locations))))
 	for i := 0; i < nodesRoot; i++ {
 		table = append(table, "<tr>")
-		myNodes := getNodes(locations, i)
+		myNodes := getNodes(locations, -i)
 		for j := 0; j < len(myNodes); j++ {
 			var color string
 			switch myNodes[j].Vehicle {
@@ -226,7 +237,7 @@ func createTable(cityID int) []string {
 			case 2:
 				color = fmt.Sprintf(`bgcolor="#228B22"`)
 			}
-			insert := fmt.Sprintf(`<img src="img/%d.jpg" height="20" width="20" />`, myNodes[j].Input)
+			insert := fmt.Sprintf(`<img src="img/%d.jpg" height="20" width="20" /> %d`, myNodes[j].Input, myNodes[j].Weight)
 			table = append(table, fmt.Sprintf(`<td style="width:100px" %s> %s </td>`, color, insert))
 		}
 		table = append(table, "</tr>")
@@ -237,7 +248,7 @@ func createTable(cityID int) []string {
 func getNodes(locations []models.Location, nodes int) []models.Location {
 	var local = make([]models.Location, 0)
 	for i := 0; i < len(locations); i++ {
-		if locations[i].Lat == nodes {
+		if locations[i].Long == nodes {
 			local = append(local, locations[i])
 		}
 	}

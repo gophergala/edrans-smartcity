@@ -56,6 +56,11 @@ func (c *City) AddService(service string, location, vehicles, minWeight int) {
 	newservice.Service = service
 	newservice.Location = location
 	newservice.Errors = make(chan error, 5)
+	node := c.GetNode(location)
+	if node == nil {
+		fmt.Println("invalid node:", location)
+		return
+	}
 	for i := 0; i < vehicles; i++ {
 		newservice.Vehicles = append(
 			newservice.Vehicles,
@@ -165,6 +170,7 @@ type Location struct {
 	Long    int
 	Vehicle int //-1: none, 0: police, 1: ambulance, 2:pumper
 	Input   int //0: north, 1: south, 2: east, 3: west
+	Weight  int
 }
 
 func (c *City) GetLocations() []Location {
@@ -178,12 +184,13 @@ func (c *City) GetLocations() []Location {
 			continue
 		}
 		input := c.GetNode(c.nodes[i].Sem.ActiveInput.OriginID)
-		fmt.Printf("\nCurrent: %+v\n", c.nodes[i])
-		fmt.Printf("Input: %+v\n", input)
+		//fmt.Printf("\nCurrent: %+v\n", c.nodes[i])
+		//fmt.Printf("Input: %+v\n", input)
 		if input == nil {
 			fmt.Printf("Error")
 			return nil
 		}
+		locations[i].Weight = c.nodes[i].Sem.ActiveInput.Weight
 		inputNode := input.Location
 		switch {
 		case inputNode[1] > c.nodes[i].Location[1]:
@@ -191,9 +198,9 @@ func (c *City) GetLocations() []Location {
 		case inputNode[1] < c.nodes[i].Location[1]:
 			locations[i].Input = 1
 		case inputNode[0] > c.nodes[i].Location[0]:
-			locations[i].Input = 3
-		case inputNode[0] < c.nodes[i].Location[0]:
 			locations[i].Input = 2
+		case inputNode[0] < c.nodes[i].Location[0]:
+			locations[i].Input = 3
 		}
 	}
 	return locations

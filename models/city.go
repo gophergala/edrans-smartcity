@@ -178,20 +178,22 @@ func (c *City) GetLocations() []Location {
 			continue
 		}
 		input := c.GetNode(c.nodes[i].Sem.ActiveInput.OriginID)
+		fmt.Printf("\nCurrent: %+v\n", c.nodes[i])
+		fmt.Printf("Input: %+v\n", input)
 		if input == nil {
 			fmt.Printf("Error")
 			return nil
 		}
 		inputNode := input.Location
 		switch {
-		case inputNode[1] > locations[i].Long:
+		case inputNode[1] > c.nodes[i].Location[1]:
 			locations[i].Input = 0
-		case inputNode[1] < locations[i].Long:
+		case inputNode[1] < c.nodes[i].Location[1]:
 			locations[i].Input = 1
-		case inputNode[0] > locations[i].Lat:
-			locations[i].Input = 2
-		case inputNode[0] < locations[i].Lat:
+		case inputNode[0] > c.nodes[i].Location[0]:
 			locations[i].Input = 3
+		case inputNode[0] < c.nodes[i].Location[0]:
+			locations[i].Input = 2
 		}
 	}
 	return locations

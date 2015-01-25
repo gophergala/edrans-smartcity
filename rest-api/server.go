@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 
 	sessions = make(map[int]*models.City)
-	sessions[0], _ = factory.CreateRectangularCity(12, 12, "default")
+	sessions[0], _ = factory.CreateRectangularCity(3, 3, "default")
 
 	muxRouter := mux.NewRouter()
 	muxRouter.StrictSlash(false)

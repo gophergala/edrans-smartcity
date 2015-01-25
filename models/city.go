@@ -170,8 +170,8 @@ type Location struct {
 func (c *City) GetLocations() []Location {
 	var locations = make([]Location, len(c.nodes))
 	for i := 0; i < len(locations); i++ {
-		locations[i].Lat = c.nodes[i].Location[1]
-		locations[i].Long = c.nodes[i].Location[0]
+		locations[i].Lat = c.nodes[i].Location[0]
+		locations[i].Long = c.nodes[i].Location[1]
 		locations[i].Vehicle = c.getVehicle(c.nodes[i].ID)
 		if len(c.nodes[i].Sem.Inputs) == 0 {
 			locations[i].Input = -1
@@ -184,13 +184,13 @@ func (c *City) GetLocations() []Location {
 		}
 		inputNode := input.Location
 		switch {
-		case inputNode[0] > locations[i].Long:
+		case inputNode[1] > locations[i].Long:
 			locations[i].Input = 0
-		case inputNode[0] < locations[i].Long:
+		case inputNode[1] < locations[i].Long:
 			locations[i].Input = 1
-		case inputNode[1] > locations[i].Lat:
+		case inputNode[0] > locations[i].Lat:
 			locations[i].Input = 2
-		case inputNode[1] < locations[i].Lat:
+		case inputNode[0] < locations[i].Lat:
 			locations[i].Input = 3
 		}
 	}

@@ -46,7 +46,7 @@ func main() {
 		fmt.Println("Cannot launch server:", err)
 		os.Exit(2)
 	}
-	fmt.Printf("Listening on port %s...\n", port)
+	fmt.Printf("Listening on port %d...\n", port)
 	http.Serve(listener, nil)
 }
 

@@ -114,7 +114,7 @@ type cityParams2 struct {
 }
 
 func getSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (status int, response interface{}) {
-	var sample = cityParams{SizeHorizontal: 10, SizeVertical: 10, Name: fmt.Sprintf("Sample-city-%d", len(sessions))}
+	var sample = cityParams{SizeHorizontal: 4, SizeVertical: 4, Name: fmt.Sprintf("Sample-city-%d", len(sessions))}
 	ctx.Body, _ = json.Marshal(sample)
 	return postSampleCity(w, r, ctx)
 }
@@ -259,7 +259,7 @@ func getIndex(w http.ResponseWriter, r *http.Request, ctx *context) (status int,
 		if strings.Contains(fileLines[i], "<table") {
 			if sessions[ctx.CityID] == nil {
 				status = 404
-				response = "ciity does not exist"
+				response = "city does not exist"
 				return
 			}
 			table := createTable(ctx.CityID)

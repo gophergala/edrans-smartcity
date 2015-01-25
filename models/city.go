@@ -195,7 +195,7 @@ func (c *City) GetLocations() []Location {
 		//fmt.Printf("\nCurrent: %+v\n", c.nodes[i])
 		//fmt.Printf("Input: %+v\n", input)
 		if input == nil {
-			fmt.Printf("Error")
+			fmt.Printf("Error in city:198\n")
 			return nil
 		}
 		locations[i].Weight = c.nodes[i].Sem.ActiveInput.Weight
@@ -215,6 +215,12 @@ func (c *City) GetLocations() []Location {
 }
 
 func (c *City) getVehicle(node int) int {
+	defer func() {
+		e := recover()
+		if e != nil {
+			fmt.Printf("Fatal error: %+v\n", e)
+		}
+	}()
 	for i := 0; i < len(c.Services); i++ {
 		for j := 0; j < len(c.Services[i].Vehicles); j++ {
 			if c.Services[i].Vehicles[j].Position.ID == node {
@@ -232,4 +238,8 @@ func (c *City) getVehicle(node int) int {
 		}
 	}
 	return -1
+}
+
+func (c *City) CleanError() {
+	c.LastError = nil
 }

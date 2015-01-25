@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"net"
 	"net/http"
 	"os"
@@ -177,6 +176,7 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 		response = "city not found"
 		return
 	}
+	defer city.CleanError()
 	vehicle, e := city.CallService(emergency.Service)
 	if e != nil {
 		status = 400
@@ -190,12 +190,22 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 		return
 	}
 	paths = algorithm.CalcEstimatesForVehicle(vehicle, paths)
-	toRun := algorithm.SortCandidates(paths)[0]
-	vehicle.Alert <- toRun
+	if len(paths) == 0 {
+		status = 400
+		response = "Oh no... there is no way to go"
+		return
+	}
+	toRun1 := algorithm.SortCandidates(paths)[0]
 	paths, _ = algorithm.GetPaths(city, emergency.Where, vehicle.BasePosition.ID)
 	paths = algorithm.CalcEstimatesForVehicle(vehicle, paths)
+	if len(paths) == 0 {
+		status = 400
+		response = "Oh no... there is no way to come back"
+		return
+	}
+	vehicle.Alert <- toRun1
 	vehicle.Alert <- algorithm.SortCandidates(paths)[0]
-	response = fmt.Sprintf("%s on the way to %d. It is %d blocks away", emergency.Service, emergency.Where, len(toRun.Links))
+	response = fmt.Sprintf("%s on the way to %d. It is %d blocks away", emergency.Service, emergency.Where, len(toRun1.Links))
 	return
 }
 
@@ -230,8 +240,7 @@ func createTable(cityID string) []string {
 	var table = make([]string, 0)
 	city := sessions[cityID]
 	locations := city.GetLocations()
-	nodesRoot := int(math.Sqrt(float64(len(locations))))
-	for i := 0; i < nodesRoot; i++ {
+	for i := 0; i < city.Size[0]; i++ {
 		table = append(table, "<tr>")
 		myNodes := getNodes(locations, -i)
 		for j := 0; j < len(myNodes); j++ {

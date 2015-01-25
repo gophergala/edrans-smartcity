@@ -55,11 +55,12 @@ func (v *Vehicle) wait() {
 	for {
 		path := <-v.Alert
 		v.run(path)
+		path = <-v.Alert
 		switch v.Service {
 		case "Hospital":
-			path = <-v.Alert
 			v.run(path)
 		case "FireDept":
+			v.back(path)
 		}
 	}
 }
@@ -70,7 +71,8 @@ func (v *Vehicle) run(path Path) time.Duration {
 	var i int
 	for i = 0; i < len(path.Links); i++ {
 		v.InCity.GetNode(path.Links[i].DestinyID).Sem.Status <- SemRequest{Status: true, Allow: path.Links[i].Name}
-		time.Sleep(time.Duration(path.Weights[i]) * time.Second)
+		time.Sleep(3 * time.Second)
+		//time.Sleep(time.Duration(path.Weights[i]) * time.Second)
 		v.InCity.GetNode(path.Links[i].DestinyID).Sem.Status <- SemRequest{Status: false, Allow: path.Links[i].Name}
 		v.Position = v.InCity.GetNode(path.Links[i].DestinyID)
 	}

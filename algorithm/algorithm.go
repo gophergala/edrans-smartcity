@@ -34,24 +34,6 @@ func getCandidates(c *models.City, origin, dest *models.Node, visited []int) []m
 	return paths
 }
 
-/*func (c *City) GetPath(origin, destiny int, service string) (*Path, error) {
-	if origin == destiny {
-		return nil, fmt.Errorf("Already at destiny")
-	}
-	org := c.getNode(origin)
-	dest := c.getNode(destiny)
-	candidates := c.getCandidates(org, dest, nil)
-	vehicle := CallService(service)
-	if c.LastError != nil || len(candidates) == 0 {
-		return nil, c.LastError
-	}
-	candidates = calcEstimates(candidates)
-	vehicle.InCity = &c
-	candidates = vehicle.CalcPaths(candidates)
-	candidates = OrderCandidates(candidates)
-	return &candidates[0], c.LastError
-}*/
-
 func alreadyVisited(ID int, visited []int) bool {
 	for i := 0; i < len(visited); i++ {
 		if visited[i] == ID {
@@ -82,27 +64,16 @@ func sortLinks(paths []models.Path) []models.Path {
 	return paths
 }
 
-/*
-func calcEstimates(paths []models.Path) []models.Path {
-	for i := 0; i < len(paths); i++ {
-		for j := 0; j < len(paths[i].Links); j++ {
-			paths[i].OriginalEstimate += paths[i].Links[j].Weight
-		}
-	}
-	return paths
-}
-*/
-
 func SortCandidates(paths []models.Path) []models.Path {
 	var done bool
 	var x int
 	for i := 0; i < len(paths) && !done; i++ {
 		done = true
 		for j := 0; j < len(paths)-x-1; j++ {
-			if paths[i].Estimate > paths[i+1].Estimate {
-				aux := paths[i]
-				paths[i] = paths[i+1]
-				paths[i+1] = aux
+			if paths[j].Estimate > paths[j+1].Estimate {
+				aux := paths[j]
+				paths[j] = paths[j+1]
+				paths[j+1] = aux
 				done = false
 				x++
 			}
@@ -117,24 +88,24 @@ func CalcEstimatesForVehicle(v *models.Vehicle, paths []models.Path) []models.Pa
 			continue
 		}
 		paths[i].Weights = make([]int, 0)
-		lastLink := paths[i].Links[0]
+		//lastLink := paths[i].Links[0]
 		weight := paths[i].Links[0].Weight
 		paths[i].Weights = append(paths[i].Weights, paths[i].Links[0].Weight)
-	LinksLoop:
+		//LinksLoop:
 		for j := 1; j < len(paths[i].Links); j++ {
-			if paths[i].Links[j].Name == lastLink.Name {
+			/*if paths[i].Links[j].Name == lastLink.Name {
 				paths[i].Weights = append(paths[i].Weights, paths[i].Links[j].Weight)
 				weight += paths[i].Links[j].Weight
 				lastLink = paths[i].Links[j]
 				continue LinksLoop
 			}
-			newLinkWeight := paths[i].Links[j].Weight - lastLink.Weight
+			newLinkWeight := paths[i].Links[j].Weight
 			if newLinkWeight < v.MinWeight {
 				newLinkWeight = v.MinWeight
 			}
-			lastLink = paths[i].Links[j]
-			weight += newLinkWeight
-			paths[i].Weights = append(paths[i].Weights, newLinkWeight)
+			lastLink = paths[i].Links[j]*/
+			weight += paths[i].Links[j].Weight
+			paths[i].Weights = append(paths[i].Weights, paths[i].Links[j].Weight)
 		}
 		paths[i].Estimate = weight
 	}

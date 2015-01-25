@@ -3,6 +3,7 @@ package factory
 import (
 	"github.com/gophergala/edrans-smartcity/models"
 
+	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
@@ -22,6 +23,10 @@ func init() {
 }
 
 func CreateRectangularCity(height int, width int, name string) (myCity *models.City, err error) {
+	if height <= 2 || width <= 2 {
+		return nil, fmt.Errorf("City size must be greater than 2")
+	}
+
 	numNodes := height * width
 	var city = make([]models.Node, numNodes)
 

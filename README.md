@@ -40,6 +40,8 @@ Green cells represent a pumper wich is in the intersection.
 _____________________________________________________________________________________________________________________
 
 
+In Spanish:
+
 Edrans Smart City pretende ser un servicio para agilizar las emergencias en una ciudad.
 El servicio que se propone es abrir el camino de los vehiculos de emergencia (ambulancias,
 patrulleros y camiones de bomberos), para que lleguen de forma rapida y eficiente a los
@@ -49,7 +51,7 @@ Esta es una primer prueba de concepto. En la misma se propone una ciudad de fant
 simulando interacciones con los semaforos de la ciudad para despejar los caminos.
 
 
-Edrans Smart City design patterns:
+Edrans Smart City DESIGN PATTERNS:
 
 Componentes:
     - algoritmo shortest path variable *

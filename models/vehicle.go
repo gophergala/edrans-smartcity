@@ -17,7 +17,7 @@ type Vehicle struct {
 }
 
 func (v *Vehicle) patrol(start int) {
-	patrol := time.After(1 * time.Second)
+	patrol := time.After(1 * time.Millisecond)
 	for {
 		select {
 		case <-patrol:

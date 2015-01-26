@@ -64,22 +64,14 @@ func sortLinks(paths []models.Path) []models.Path {
 	return paths
 }
 
-func SortCandidates(paths []models.Path) []models.Path {
-	var done bool
-	var x int
-	for i := 0; i < len(paths) && !done; i++ {
-		done = true
-		for j := 0; j < len(paths)-x-1; j++ {
-			if paths[j].Estimate > paths[j+1].Estimate {
-				aux := paths[j]
-				paths[j] = paths[j+1]
-				paths[j+1] = aux
-				done = false
-				x++
-			}
+func ChooseBest(paths []models.Path) models.Path {
+	var better = paths[0]
+	for i := 1; i < len(paths); i++ {
+		if paths[i].Estimate < better.Estimate {
+			better = paths[i]
 		}
 	}
-	return paths
+	return better
 }
 
 func CalcEstimatesForVehicle(v *models.Vehicle, paths []models.Path) []models.Path {

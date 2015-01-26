@@ -35,7 +35,7 @@ func (s *PublicService) readErrors(c *City) {
 			Alert:        make(chan Path, 2),
 			Errors:       s.Errors,
 			InCity:       c,
-			Position:     c.GetNode(NewPublicServicePosition(c, len(c.nodes))),
+			Position:     c.GetNode(s.Location),
 			BasePosition: c.GetNode(s.Location),
 		}
 		s.Vehicles = append(s.Vehicles, newPatrolman)

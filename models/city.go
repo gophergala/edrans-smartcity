@@ -195,14 +195,16 @@ func (c *City) GetLocations() []Location {
 		locations[i].Lat = c.nodes[i].Location[0]
 		locations[i].Long = c.nodes[i].Location[1]
 		locations[i].Vehicle = c.getVehicle(c.nodes[i].ID)
+		if c.nodes[i].Sem == nil {
+			locations[i].Input = -1
+			continue
+		}
 		if len(c.nodes[i].Sem.Inputs) == 0 {
 			locations[i].Input = -1
 			continue
 		}
 
 		input := c.GetNode(c.nodes[i].Sem.ActiveInput.OriginID)
-		//fmt.Printf("\nCurrent: %+v\n", c.nodes[i])
-		//fmt.Printf("Input: %+v\n", input)
 		if input == nil {
 			fmt.Printf("Error in city:198\n")
 			return nil
@@ -227,13 +229,7 @@ func (c *City) getVehicle(node int) int {
 	i := 0
 	j := 0
 	defer func() {
-		e := recover()
-		if e != nil {
-			fmt.Println("ERROR!!!")
-			fmt.Println(c.Services[i].Vehicles[j])
-
-			fmt.Printf("Fatal error: %+v\n", e)
-		}
+		_ = recover()
 	}()
 	for i = 0; i < len(c.Services); i++ {
 		for j = 0; j < len(c.Services[i].Vehicles); j++ {

@@ -32,15 +32,16 @@ type context struct {
 func main() {
 	var port int
 	var err error
-	flag.IntVar(&port, "port", 2489, "port server will be launched")
+	flag.IntVar(&port, "port", 2480, "port server will be launched")
 	flag.Parse()
 
 	sessions = make(map[string]*models.City)
-	sessions["default"], err = factory.CreateRectangularCity(3, 3, "default")
+	sessions["default"], err = factory.CreateRectangularCity(5, 5, "default")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(2)
 	}
+	time.Sleep(2 * time.Second)
 
 	muxRouter := mux.NewRouter()
 	muxRouter.StrictSlash(false)
@@ -84,8 +85,6 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx.CityID, _ = vars["cityID"]
 
 	status, response := h(w, r, &ctx)
-	fmt.Println("status:", status)
-	fmt.Println("response:", response)
 	if status == -1 {
 		return
 	}
@@ -225,7 +224,10 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 		return
 	}
 
-	toRun1 := algorithm.SortCandidates(paths)[0]
+	fmt.Printf("%+v\n", paths)
+
+	toRun1 := algorithm.ChooseBest(paths)
+	fmt.Printf("to run: %+v\n", toRun1)
 	paths, _ = algorithm.GetPaths(city, emergency.Where, vehicle.BasePosition.ID)
 	paths = algorithm.CalcEstimatesForVehicle(vehicle, paths)
 
@@ -236,7 +238,7 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 	}
 
 	vehicle.Alert <- toRun1
-	vehicle.Alert <- algorithm.SortCandidates(paths)[0]
+	vehicle.Alert <- algorithm.ChooseBest(paths)
 	response = fmt.Sprintf("%s on the way to %d. It is %d blocks away", emergency.Service, emergency.Where, len(toRun1.Links))
 	return
 }

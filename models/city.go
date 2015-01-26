@@ -240,11 +240,11 @@ func (c *City) getVehicle(node int) int {
 			if c.Services[i].Vehicles[j].Position.ID == node {
 				var vehicleType int
 				switch c.Services[i].Vehicles[j].Service {
-				case "Hospital":
+				case SERVICE_HOSPITAL:
 					vehicleType = 1
-				case "FireDept":
+				case SERVICE_FIREFIGHTER:
 					vehicleType = 2
-				case "PoliceDept":
+				case SERVICE_POLICE:
 					vehicleType = 0
 				}
 				return vehicleType

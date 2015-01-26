@@ -37,13 +37,11 @@ func (sem *Semaphore) Start() {
 		select {
 		case <-change:
 			if !sem.Paused {
-				if len(sem.Inputs) > current+1 {
-					current++
-					sem.ActiveInput = &sem.Inputs[current]
-					if len(sem.Inputs) == current+1 {
-						current = -1
-					}
+				current++
+				if current == len(sem.Inputs) {
+					current = 0
 				}
+				sem.ActiveInput = &sem.Inputs[current]
 			}
 			change = time.After(sem.Interval)
 		case req := <-sem.Status:

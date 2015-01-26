@@ -5,6 +5,13 @@ import (
 	"math/rand"
 )
 
+const (
+	POS_SOUTH = 0
+	POS_NORTH = 1
+	POS_WEST  = 2
+	POS_EAST  = 3
+)
+
 type City struct {
 	nodes    []Node
 	Services []PublicService
@@ -36,6 +43,14 @@ type Path struct {
 	OriginalEstimate int
 	Reached          bool
 	ForgetMe         bool
+}
+
+type Location struct {
+	Lat     int
+	Long    int
+	Vehicle int //-1: none, 0: police, 1: ambulance, 2:pumper
+	Input   int
+	Weight  int
 }
 
 func NewCity(nodeList []Node, name string, height, width int) (city *City, err error) {
@@ -87,7 +102,7 @@ func (c *City) AddService(service string, location, vehicles, minWeight int) {
 
 func (c *City) LaunchVehicles() {
 	for i := 0; i < len(c.Services); i++ {
-		if c.Services[i].Service == "Hospital" || c.Services[i].Service == "FireDept" {
+		if c.Services[i].Service == SERVICE_HOSPITAL || c.Services[i].Service == SERVICE_FIREFIGHTER {
 			for j := 0; j < len(c.Services[i].Vehicles); j++ {
 				go c.Services[i].Vehicles[j].wait()
 			}
@@ -102,12 +117,12 @@ func (c *City) LaunchVehicles() {
 
 func (c *City) CallService(call string) (*Vehicle, error) {
 	switch call {
-	case "Medic":
-		return c.callService("Hospital", "ambulance")
-	case "Fireman":
-		return c.callService("FireDept", "pumper")
-	case "Police":
-		return c.callService("PoliceDept", "patrolman")
+	case CALL_SERVICE_MEDIC:
+		return c.callService(SERVICE_HOSPITAL, VEHICLE_AMBULANCE)
+	case CALL_SERVICE_FIREMAN:
+		return c.callService(SERVICE_FIREFIGHTER, VEHICLE_PUMPER)
+	case CALL_SERVICE_POLICE:
+		return c.callService(SERVICE_POLICE, VEHICLE_POLICE_CAR)
 	}
 	return nil, fmt.Errorf("unknown service")
 }
@@ -174,14 +189,6 @@ func (c *City) GetNode(ID int) *Node {
 	return &c.nodes[ID-1]
 }
 
-type Location struct {
-	Lat     int
-	Long    int
-	Vehicle int //-1: none, 0: police, 1: ambulance, 2:pumper
-	Input   int //0: north, 1: south, 2: east, 3: west
-	Weight  int
-}
-
 func (c *City) GetLocations() []Location {
 	var locations = make([]Location, len(c.nodes))
 	for i := 0; i < len(locations); i++ {
@@ -192,6 +199,7 @@ func (c *City) GetLocations() []Location {
 			locations[i].Input = -1
 			continue
 		}
+
 		input := c.GetNode(c.nodes[i].Sem.ActiveInput.OriginID)
 		//fmt.Printf("\nCurrent: %+v\n", c.nodes[i])
 		//fmt.Printf("Input: %+v\n", input)
@@ -203,27 +211,32 @@ func (c *City) GetLocations() []Location {
 		inputNode := input.Location
 		switch {
 		case inputNode[1] > c.nodes[i].Location[1]:
-			locations[i].Input = 0
+			locations[i].Input = POS_SOUTH
 		case inputNode[1] < c.nodes[i].Location[1]:
-			locations[i].Input = 1
+			locations[i].Input = POS_NORTH
 		case inputNode[0] > c.nodes[i].Location[0]:
-			locations[i].Input = 2
+			locations[i].Input = POS_WEST
 		case inputNode[0] < c.nodes[i].Location[0]:
-			locations[i].Input = 3
+			locations[i].Input = POS_EAST
 		}
 	}
 	return locations
 }
 
 func (c *City) getVehicle(node int) int {
+	i := 0
+	j := 0
 	defer func() {
 		e := recover()
 		if e != nil {
+			fmt.Println("ERROR!!!")
+			fmt.Println(c.Services[i].Vehicles[j])
+
 			fmt.Printf("Fatal error: %+v\n", e)
 		}
 	}()
-	for i := 0; i < len(c.Services); i++ {
-		for j := 0; j < len(c.Services[i].Vehicles); j++ {
+	for i = 0; i < len(c.Services); i++ {
+		for j = 0; j < len(c.Services[i].Vehicles); j++ {
 			if c.Services[i].Vehicles[j].Position.ID == node {
 				var vehicleType int
 				switch c.Services[i].Vehicles[j].Service {

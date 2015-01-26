@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 
 	sessions = make(map[string]*models.City)
-	sessions["default"], err = factory.CreateRectangularCity(10, 10, "default")
+	sessions["default"], err = factory.CreateRectangularCity(3, 3, "default")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(2)

@@ -72,7 +72,6 @@ func (v *Vehicle) run(path Path) time.Duration {
 	for i = 0; i < len(path.Links); i++ {
 		v.InCity.GetNode(path.Links[i].DestinyID).Sem.Status <- SemRequest{Status: true, Allow: path.Links[i].Name}
 		time.Sleep(3 * time.Second)
-		//time.Sleep(time.Duration(path.Weights[i]) * time.Second)
 		v.InCity.GetNode(path.Links[i].DestinyID).Sem.Status <- SemRequest{Status: false, Allow: path.Links[i].Name}
 		v.Position = v.InCity.GetNode(path.Links[i].DestinyID)
 	}

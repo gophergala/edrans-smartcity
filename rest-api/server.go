@@ -32,11 +32,11 @@ type context struct {
 func main() {
 	var port int
 	var err error
-	flag.IntVar(&port, "port", 2480, "port server will be launched")
+	flag.IntVar(&port, "port", 2489, "port server will be launched")
 	flag.Parse()
 
 	sessions = make(map[string]*models.City)
-	sessions["default"], err = factory.CreateRectangularCity(5, 5, "default")
+	sessions["default"], err = factory.CreateRectangularCity(10, 10, "default")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(2)
@@ -73,14 +73,11 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var ctx context
 	var e error
 
-	//w.Header().Set("Content-Type", "application/json")
-
 	ctx.Body, e = ioutil.ReadAll(r.Body)
 	if e != nil {
 		fmt.Println("Error when reading body!")
 	}
 
-	//ctx.CityID = r.Header.Get("city-name")
 	vars := mux.Vars(r)
 	ctx.CityID, _ = vars["cityID"]
 
@@ -131,13 +128,6 @@ func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (statu
 		return
 	}
 
-	/*if err != nil {
-		status = http.StatusBadRequest
-		fmt.Printf("error in body %+v\n", string(ctx.Body))
-		response = "invalid json body"
-		return
-	}*/
-
 	if sessions[in.Name] != nil {
 		status = 403
 		response = "city already exists"
@@ -151,9 +141,6 @@ func postSampleCity(w http.ResponseWriter, r *http.Request, ctx *context) (statu
 		return
 	}
 
-	/*response = cityOut{
-		CityName: in.Name,
-	}*/
 	if status != 302 {
 		url = "/error"
 	} else {
@@ -224,10 +211,7 @@ func postEmergency(w http.ResponseWriter, r *http.Request, ctx *context) (status
 		return
 	}
 
-	fmt.Printf("%+v\n", paths)
-
 	toRun1 := algorithm.ChooseBest(paths)
-	fmt.Printf("to run: %+v\n", toRun1)
 	paths, _ = algorithm.GetPaths(city, emergency.Where, vehicle.BasePosition.ID)
 	paths = algorithm.CalcEstimatesForVehicle(vehicle, paths)
 
@@ -302,16 +286,6 @@ func getNodes(locations []models.Location, nodes int) []models.Location {
 			local = append(local, locations[i])
 		}
 	}
-	/*var done bool
-	for i := 0; i < len(local)-1 && !done; i++ {
-		done = true
-		if local[i].Long > local[i+1].Long {
-			aux := local[i]
-			local[i] = local[i+1]
-			local[i+1] = aux
-			done = false
-		}
-	}*/
 	return local
 }
 

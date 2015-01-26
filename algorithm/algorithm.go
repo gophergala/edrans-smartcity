@@ -80,22 +80,10 @@ func CalcEstimatesForVehicle(v *models.Vehicle, paths []models.Path) []models.Pa
 			continue
 		}
 		paths[i].Weights = make([]int, 0)
-		//lastLink := paths[i].Links[0]
 		weight := paths[i].Links[0].Weight
 		paths[i].Weights = append(paths[i].Weights, paths[i].Links[0].Weight)
-		//LinksLoop:
 		for j := 1; j < len(paths[i].Links); j++ {
-			/*if paths[i].Links[j].Name == lastLink.Name {
-				paths[i].Weights = append(paths[i].Weights, paths[i].Links[j].Weight)
-				weight += paths[i].Links[j].Weight
-				lastLink = paths[i].Links[j]
-				continue LinksLoop
-			}
-			newLinkWeight := paths[i].Links[j].Weight
-			if newLinkWeight < v.MinWeight {
-				newLinkWeight = v.MinWeight
-			}
-			lastLink = paths[i].Links[j]*/
+
 			weight += paths[i].Links[j].Weight
 			paths[i].Weights = append(paths[i].Weights, paths[i].Links[j].Weight)
 		}
